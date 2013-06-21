@@ -10,28 +10,24 @@
 
 module PictureDSL where
 
-import Prelude hiding (lookup)
-import Maths
-import Dataset
--- import qualified CellTypes as Cell
-import CellTypes
-import Render
-import Graphics
-import Geometries
-import Algorithms
-import Colour
-import RectGrid
-import AstroData -- hiding (Slice)
-
-import qualified Graphics.Rendering.OpenGL.GL as GL
---import Graphics.Rendering.OpenGL.GL.VertexSpec
 --import Graphics.Rendering.OpenGL.GL.BasicTypes
-
-import Data.Array.Parallel.Unlifted (toList, Elt)
---import qualified Data.Array.Repa as A
+--import Graphics.Rendering.OpenGL.GL.VertexSpec
 import Control.Applicative
-
+import Prelude hiding (lookup)
+import qualified Graphics.Rendering.OpenGL.GL as GL
 import System.IO.Unsafe
+
+-- import qualified CellTypes as Cell
+import Algorithms
+import AstroData -- hiding (Slice)
+import CellTypes
+import Colour
+import Dataset
+import Geometries
+import Graphics
+import Maths
+import RectGrid
+import Render
 
 -- 1. Colours -------------------------------------------------------
 --
@@ -132,7 +128,7 @@ from4 t s = astroFour t s
 --   < - back one frame
 --   > - forward one frame
 
-data Real v => Picture v = Contour Colour (Range v) (Grid2D v) -- (DataExpr v)
+data Picture v = Contour Colour (Range v) (Grid2D v) -- (DataExpr v)
                          | ASurface Colour (Range v) (Grid3D v) -- (DataExpr v)
                          | Surface Colour (Range v) (Grid3D v) -- (DataExpr v)
                          | Volume Colour (DataExpr v)
@@ -266,8 +262,7 @@ isosurf = Algorithms.iso
 
 {-# SPECIALISE eval_picture :: Picture Double -> HsScene
  #-}
-eval_picture
-  :: (Enum a, Interp a, InvInterp a, Elt a) => Picture a -> HsScene
+eval_picture :: (Enum a, Interp a, InvInterp a) => Picture a -> HsScene
 
 {-
 eval_picture env (Volume pal de)

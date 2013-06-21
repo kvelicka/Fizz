@@ -5,18 +5,17 @@
 
 module RectGrid where
 
-import Prelude hiding (lookup)
-import Dataset
-import Geometries
-import CellTypes
 import Control.Applicative
-
 import Data.Array
+import Data.Char
 import Data.List ((!!), elemIndex,zipWith4, nub)
 import Data.Maybe (fromJust)
-import Data.Char
+import Prelude hiding (lookup)
+import Graphics.Rendering.OpenGL.GL (Vertex3(..))
 
-import Numeric
+import CellTypes
+import Dataset
+import Geometries
 
 -- Cells in the dataset are cubes.
 

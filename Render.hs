@@ -693,7 +693,7 @@ mcat :: HsMatrix -> HsMatrix -> HsMatrix
 -- m `mcat` n = [[r `mdot` c | c <- tn] | r <- m] where tn = transpose n
 m `mcat` n = [[r `mdot` c | c <- tm] | r <- n] where tm = transpose m
 
-homogenise :: Floating a => Vertex4 a -> Vertex3 a
+homogenise :: (Floating a, Eq a) => Vertex4 a -> Vertex3 a
 homogenise (Vertex4 x y z w)
   | w == 0.0   = Vertex3 (x/w) (y/w) (z/w)
   | otherwise  = Vertex3 x     y     z

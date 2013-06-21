@@ -17,6 +17,9 @@ class (Functor c, Enum v) => Cell c v | c -> v where
   
 newtype Stream c v a = Stream { stream :: [c a] }
 
+toList :: Stream c v a -> [c a]
+toList (Stream [s]) = [s]
+
 newtype Cells c v a = Cells { cells :: [c a] } deriving (Show)
 
 
