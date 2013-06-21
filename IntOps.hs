@@ -2,6 +2,9 @@ module IntOps where
 
 import Test.SmallCheck
 
+-- Hacky workaround, needs a fix?
+data Nat = N Int
+
 -- closest integer approximation to square root
 -- (could also compute lower bound too)
 
@@ -36,4 +39,3 @@ prop_rootBound :: Nat -> Bool
 prop_rootBound (N i) = rb * rb >= i
   where
   rb = rootBound i
-

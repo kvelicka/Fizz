@@ -7,28 +7,22 @@
 
 module AstroData where
 
-import Text.ParserCombinators.Poly
-import Data.Char
-import Dataset
-
---import RectGrid
-import Dataset
-import qualified Data.Array.Parallel.Unlifted as U
-
-import Data.Maybe
-import System.IO.Unsafe (unsafePerformIO)
-
-import System.IO
-import System.Posix.Files
 import Data.Bits
+import Data.Char
+import Data.Maybe
+import Data.Ratio
+import Data.Word
+import GHC.Int
+import Numeric
+import qualified Data.ByteString as BS
+import System.IO
+import System.IO.Unsafe (unsafePerformIO)
+import System.Posix.Files
+import Text.ParserCombinators.Poly
+
+import Dataset
 import FixedPrecision
 import Sample hiding (s)
-import Data.Word
-import qualified Data.ByteString {-.Lazy -} as Fast
-import GHC.Int
-import Data.Ratio
-import Numeric
-
 
 -- Dataset definitions ------------------------------------------------------
 data Species = D | G | H | Hp | He | Hep | Hepp | Hm | H2 | H2p
@@ -170,65 +164,50 @@ integer = do cs <- many1 (satisfy isDigit)
 
 -- Low-level IO and conversion ----------------------------------------------
 
-read_astro_file :: (U.IOElt v, U.Elt v, Ord v, Fractional v) => String -> IO (Grid3D v)
+data Field = Field { name    :: String
+                   , origin  :: String
+                   , range_x :: Range Int
+                   , range_y :: Range Int
+                   , range_z :: Range Int
+                   , time    :: Int
+                   , minv    :: Float
+                   , maxv    :: Float
+                   , source  :: Source
+                   }
+
+read_astro_file :: String -> IO Field
 read_astro_file str
-    = read_astro (result . fst . runParser slice $ str)
+    = read_astro_data (result . fst . runParser slice $ str)
       where result (Left err) = error err       
             result (Right ok) = ok
-            
-read_astro_double :: VisData -> IO (Grid3D Double)
-read_astro_double d@(From xr yr zr t sp)
-    = do let basename = show d
-         let summary = basename ++ ".summary"
-         let dim = Z :. range_size zr :. range_size yr :. range_size xr
-         h <- openFile ("repa_"++basename++".dat") ReadMode    
-         arr :: U.Array Double <- U.hGet h
-         haveSummary <- fileExist summary    
-         [min, max] <- if haveSummary
-                          then do v <- Fast.readFile summary
-                                  return [bytesToValues 0 v, bytesToValues 1 v]
-                          else return $ compute_bounds arr
-         return $ Grid basename (show sp) dim t min max arr
 
-read_astro :: (U.IOElt v, U.Elt v, Ord v, Fractional v) => VisData -> IO (Grid3D v)
-read_astro d@(From xr yr zr t sp)
-    = do let basename = show d
-         let summary = basename ++ ".summary"
-         let dim = Z :. range_size zr :. range_size yr :. range_size xr
-         h <- openFile ("repa_"++basename++".dat") ReadMode    
-         arr <- U.hGet h
-         haveSummary <- fileExist summary    
-         [min, max] <- if haveSummary
-                          then do v <- Fast.readFile summary
-                                  return [bytesToValues 0 v, bytesToValues 1 v]
-                          else return $ compute_bounds arr
-         return $ Grid basename (show sp) dim t min max arr
-            
-{-
-read_astro :: (U.Elt v, Ord v, Fractional v) => VisData -> IO (Grid3D v)
-read_astro d@(From xr yr zr t sp)
-    = do let basename = show d
-         let summary = basename ++ ".summary"
-         let dim = Z :. range_size zr :. range_size yr :. range_size xr
-         str <- Fast.readFile $ basename ++ ".dat"
-         let arr = fromList dim $ bytesToValues str
-         haveSummary <- fileExist summary    
-         [min, max] <- if haveSummary
-                          then return . bytesToValues =<< Fast.readFile summary
-                          else return $ compute_bounds arr
-         return $ Grid basename (show sp) dim t min max arr
--}
-
-compute_bounds :: (U.Elt n, Ord n) => U.Array n -> [n]
-compute_bounds arr = [U.fold1 min arr, U.fold1 max arr]
+read_astro_data :: VisData -> IO Field
+read_astro_data d@(From x y z t s)
+    = do { let basename = show d
+         ; let summaryf = basename ++ ".summary"
+         ; h <- openFile (basename ++ ".dat") ReadMode 
+         ; b <- BS.hGetContents h
+         ; has_summary <- fileExist summaryf
+         ; if has_summary
+           then do { hs <- openFile summaryf ReadMode
+                   ; bs <- BS.hGetContents hs
+                   ; let [minv,maxv] = map sampleToFloat . bytesToSamples $ bs
+                   ; return $ Field (show s) basename x y z t minv maxv (Bytes b)
+                   }
+           else do { let samples = map sampleToFloat . bytesToSamples $ b
+                   ; let minv = minimum samples
+                   ; let maxv = maximum samples
+                   ; return $ Field (show s) basename x y z t minv maxv (Samples samples)
+                   }
+         }
   
-bytesToValues :: Fractional a => Int -> Fast.ByteString -> a
+bytesToValues :: Fractional a => Int -> BS.ByteString -> a
 bytesToValues !i bs
     = let start = fromIntegral $ i*4
-          a = bs `Fast.index` start
-          b = bs `Fast.index` (start + 1)
-          c = bs `Fast.index` (start + 2)
-          d = bs `Fast.index` (start + 3)
+          a = bs `BS.index` start
+          b = bs `BS.index` (start + 1)
+          c = bs `BS.index` (start + 2)
+          d = bs `BS.index` (start + 3)
           a16 :: Int16 = fromIntegral a `shiftL` 8
           b16 :: Int16 = fromIntegral b 
           c16 :: Int16 = fromIntegral c `shiftL`  8
@@ -238,59 +217,3 @@ bytesToValues !i bs
           val | exp < 0   = toInteger man % (10 ^ negate (toInteger exp))
               | otherwise = toInteger man * (10^exp) % 1  
       in realToFrac val
-
-{-
-bytesToValues :: Fractional a => Int -> Fast.ByteString -> IO (U.Array a)
-bytesToValues size bs
-    = do US.newU size $ \(arr :: U.Array Double) -> let loop !i | i >= size = return arr
-                                                                | otherwise = do let start = i*4
-                                                                                 let a = bs `Fast.index` start
-                                                                                 let b = bs `Fast.index` (start + 1)
-                                                                                 let c = bs `Fast.index` (start + 2)
-                                                                                 let d = bs `Fast.index` (start + 3)
-                                                                                 let a16 :: Int16 = fromIntegral a `shiftL` 8
-                                                                                 let b16 :: Int16 = fromIntegral b 
-                                                                                 let c16 :: Int16 = fromIntegral c `shiftL`  8
-                                                                                 let d16 :: Int16 = fromIntegral d    
-                                                                                 let exp = a16 .|. b16
-                                                                                 let man = c16 .|. d16
-                                                                                 let val | exp < 0   = toInteger man % (10 ^ negate (toInteger exp))
-                                                                                         | otherwise = toInteger man * (10^exp) % 1  
-                                                                                 US.unsafeWrite i val arr
-                                                                                 loop (i+1) 
-                                                    in do loop 0 
-                                                          US.unsafeFreezeAllMU arr
-                                                          return arr
--}
-
-{-         
-bytesToValues :: Fractional a => Fast.ByteString -> [a]
-bytesToValues bs
-    | Fast.null bs   = []
-    | otherwise      = fromRational val : bytesToValues post
-                       where
-                           (pre,post) = Fast.splitAt 4 bs
-                           [a,b,c,d]  = Fast.unpack pre
-                           exp = a16 .|. b16
-                           man = c16 .|. d16
-                           val | exp < 0   = toInteger man % (10 ^ negate (toInteger exp))
-                               | otherwise = toInteger man * (10^exp) % 1    
-                           a16 :: Int16 = fromIntegral a `shiftL` 8
-                           b16 :: Int16 = fromIntegral b 
-                           c16 :: Int16 = fromIntegral c `shiftL`  8
-                           d16 :: Int16 = fromIntegral d
--}
-
-read_data :: String -> Fast.ByteString
-read_data fnm = unsafePerformIO (            
-                do h <- openFile fnm ReadMode 
-                   Fast.hGetContents h)
-         
-read_bounds fnm = unsafePerformIO $                   
-                  do has_summary <- fileExist fnm
-                     if has_summary
-                       then do let vals = read_data fnm
-                               let [min, max]  = bytesToValues vals
-                               -- let max  = decode 1 vals
-                               return $ Just (min,max)
-                       else return Nothing

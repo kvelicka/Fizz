@@ -1,10 +1,12 @@
 {-# LANGUAGE ScopedTypeVariables, GeneralizedNewtypeDeriving #-}
 module Sample where
 
-import Prelude hiding (exponent)
-import FixedPrecision
-import Foreign
 import Data.Word
+import Foreign
+import Prelude hiding (exponent)
+import qualified Data.ByteString as BS
+
+import FixedPrecision
 
 newtype Sample = Sample { s :: Word32 }
     deriving (Storable, Show)
@@ -32,3 +34,19 @@ prop_fp_float fp =
     let lhs :: Float = ((fromIntegral $ mantissa fp) * 10.0 ^^ (exponent fp))
     in lhs == (fromRational.toRational $ fp)
 
+
+sampleToFloat :: Sample -> Float
+sampleToFloat = fromRational . toRational . fromSample
+
+bytesToSamples :: BS.ByteString -> [Sample]
+bytesToSamples bs 
+    | BS.null bs   = []
+    | otherwise      = (Sample s):bytesToSamples post
+                       where
+                           (pre,post) = BS.splitAt 4 bs
+                           [a,b,c,d]  = BS.unpack pre
+                           s = (a32 .|. b32 .|. c32 .|. d32)
+                           a32 :: Word32 = fromIntegral a `shiftL` 24
+                           b32 :: Word32 = fromIntegral b `shiftL` 16
+                           c32 :: Word32 = fromIntegral c `shiftL`  8
+                           d32 :: Word32 = fromIntegral d

@@ -33,13 +33,15 @@ dim_x d = let [_,_,x] = dims d in x
 dim_y d = let [_,y,_] = dims d in y 
 dim_z d = let [z,_,_] = dims d in z
 
+data Source = Bytes BS.ByteString | Samples [Float] deriving Show
+
 data Grid sh v = Grid { origin  :: String
                       , field   :: String
                       , shape   :: sh
                       , time    :: Int
                       , minv    :: v
                       , maxv    :: v
-                      , values  :: BS.ByteString
+                      , values  :: Source
                       } deriving Show
 
 type Grid3D a = Grid DIM3 a
