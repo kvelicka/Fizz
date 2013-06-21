@@ -22,8 +22,7 @@ import Numeric
 
 -- Cells in the dataset are cubes.
 
-data Cell_4 a = Cell_4  {-# UNPACK #-} !a {-# UNPACK #-} !a {-# UNPACK #-} !a {-# UNPACK #-} !a             deriving (Eq,Ord,Show)
---data Cell_8 a = Cell_8  {-# UNPACK #-} !a {-# UNPACK #-} !a {-# UNPACK #-} !a {-# UNPACK #-} !a {-# UNPACK #-} !a {-# UNPACK #-} !a {-# UNPACK #-} !a {-# UNPACK #-} !a deriving (Eq,Ord,Show)
+data Cell_4 a = Cell_4 !a !a !a !a             deriving (Eq,Ord,Show)
 
 data Cell_8 a = Cell_8 !a !a !a !a !a !a !a !a deriving (Eq,Ord,Show)
 
@@ -216,27 +215,7 @@ instance Cell Cell_4 MyVertex where
                         , {- T, T, T, T -} []
                         ]
             in (table!)
-{-
-  mc_case = let table = listArray (Cell_4 False False False False, Cell_4 True True True True) $
-                        [ {- F, F, F, F -} []
-                        , {- T, F, F, F -} [FacLine (A,B) (A,D)]
-                        , {- F, T, F, F -} [FacLine (A,B) (B,C)]
-                        , {- T, T, F, F -} [FacLine (B,C) (A,D)]
-                        , {- F, F, T, F -} [FacLine (B,C) (C,D)]
-                        , {- T, F, T, F -} [FacLine (A,B) (A,D), FacLine (B,C) (C,D)]
-                        , {- F, T, T, F -} [FacLine (A,B) (C,D)]
-                        , {- T, T, T, F -} [FacLine (D,A) (D,C)]
-                        , {- F, F, F, T -} [FacLine (D,A) (D,C)]
-                        , {- T, F, F, T -} [FacLine (A,B) (C,D)]
-                        , {- F, T, F, T -} [FacLine (A,B) (B,C), FacLine (C,D) (D,A)]
-                        , {- T, T, F, T -} [FacLine (B,C) (C,D)]
-                        , {- F, F, T, T -} [FacLine (B,C) (A,D)]
-                        , {- T, F, T, T -} [FacLine (A,B) (B,C)]
-                        , {- F, T, T, T -} [FacLine (A,D) (A,B)]
-                        , {- T, T, T, T -} []
-                        ]
-            in (table!)
--}
+
 -- Generate a dataset consisting of the coordinates in a (xsz x ysz x zsz)-cube.
 -- Note that the origin of the cube is (0,0,0), and that the components refer
 -- to the number of CELLS along each dimension.
