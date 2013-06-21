@@ -1,15 +1,13 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, TypeFamilies #-}
 
 module CellTypes (module CellTypes, module CaseTable) where
+import Dataset
 
 import Maths
 import CaseTable
 import Graphics.Rendering.OpenGL as GL
 import Control.Applicative
 
---import Data.Array.Repa (Array(..), Shape, Z(..), DIM3(..))
---import Data.Array.Parallel.Unboxed (Shape), DIM3(..))
-import Dataset
 
 class (Functor c, Enum v) => Cell c v | c -> v where
   data Facet c :: * -> *
@@ -18,44 +16,8 @@ class (Functor c, Enum v) => Cell c v | c -> v where
 --  renderF  :: Facet  -> IO()
   
 newtype Stream c v a = Stream { stream :: [c a] }
--- newtype (Enum v, Cell c v) => Stream c v a = Stream { stream :: [c a] }
 
-{-
-class Shape sh => IsoCell sh c v | sh -> v, sh -> c where  
-  icells :: sh -> [c sh]
-  iverts :: sh -> (v GL.GLfloat)
-  
-class Shape sh => IsoCells sh where
-  type ICell sh :: * -> *
-  type IVert sh :: * -> *     
---  icell :: sh -> [ICell sh Int]
-  icell :: sh -> [ICell sh sh]
-  verts :: sh -> (IVert sh Float)
--}
-{-
-
-class Cell c where
-  type Vert c :: * -> *
-  type Facet c :: * -> *     
-  select  :: v  -> c a -> a
-  mc_case :: c Bool -> [Facet c (v,v)]
-  -}     
-
-{-
-data Show a => II a = II a deriving Show
-
-instance IsoCells Z where
-  type ICell = II 
-  icell Z = II []
-
-instance IsoCells a => IsoCells (a :. b) where
-  type ICell = II 
-  icell Z = II []
--}
-  
--- newtype (Enum v, Cell c v) => Cells c v a = Cells { cells :: [c a] } deriving (Show)
 newtype Cells c v a = Cells { cells :: [c a] } deriving (Show)
-
 
 
 -- Pairing allows us to take two datasets (which should have the same
@@ -151,19 +113,3 @@ locatePentaPrism n G = Vertex3 (2.5*n) (5*n) (4*n)
 locatePentaPrism n H = Vertex3 (5*n)   (3*n) (4*n)
 locatePentaPrism n I = Vertex3 (4*n)    0.0  (4*n)
 locatePentaPrism n J = Vertex3   n      0.0  (4*n)
-
-{-
-locateHexPrism n A = Vertex3 
-locateHexPrism n B = Vertex3
-locateHexPrism n C = Vertex3
-locateHexPrism n D = Vertex3
-locateHexPrism n E = Vertex3
-locateHexPrism n F = Vertex3
-locateHexPrism n G = Vertex3
-locateHexPrism n H = Vertex3
-locateHexPrism n I = Vertex3
-locateHexPrism n J = Vertex3
-locateHexPrism n J = Vertex3
-locateHexPrism n L = Vertex3
--}
-

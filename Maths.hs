@@ -27,10 +27,10 @@ instance Interp Float where
   interp t v1 v2 = (1-t)*v1 + t*v2
 
 instance Interp GL.GLfloat where
-  interp t v1 v2 = let tf = realToFrac t in (1-tf)*v1 + tf*v2
+  interp t v1 v2 = let t' = realToFrac t in (1-t')*v1 + t'*v2
 
 instance Interp Double where
-  interp t v1 v2 = let tf = realToFrac t in (1-tf)*v1 + tf*v2
+  interp t v1 v2 = let t' = realToFrac t in (1-t')*v1 + t'*v2
 
 instance Interp Word8 where
   interp t v1 v2 = toEnum.fromEnum.round $ (1-t)*(toFloat v1) + t*(toFloat v2)

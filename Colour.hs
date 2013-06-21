@@ -19,8 +19,6 @@ module Colour where
 
 import Control.Applicative
 import qualified Graphics.Rendering.OpenGL.GL as GL
---import Graphics.Rendering.OpenGL.GL.VertexSpec
---import Graphics.Rendering.OpenGL.GL.BasicTypes
 import Maths
 import Data.Array (listArray, (!))
 
@@ -38,18 +36,6 @@ data ColourName = Blue | Red | Green | Orange | White | Yellow
 -- powerful algebraic structures, general functors and applicative
 -- functors.  This allows us to lift computations from values up
 -- to computations over colours.
-{- Not needed, now in OpenGL?
-instance Functor GL.Color4 where
-  fmap f (GL.Color4 v1 v2 v3 v4) = GL.Color4 (f v1) (f v2) (f v3) (f v4)
-
-instance Applicative GL.Color4 where
-  pure v = GL.Color4 v v v v
-  (GL.Color4 f1 f2 f3 f4) <*> (GL.Color4 v1 v2 v3 v4) = GL.Color4 (f1 v1) (f2 v2) (f3 v3) (f4 v4)
-
-instance Interp GL.GLfloat where
-  interp t v1 v2 = let t' = realToFrac t in (1-t')*v1 + t'*v2
--}
-
 
 
 transfer_t :: (Real a) => (a,a) -> [GL.Color4 GL.GLfloat] -> a -> GL.Color4 GL.GLfloat

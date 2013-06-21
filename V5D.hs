@@ -225,7 +225,6 @@ parseTag Tlocal  vtype t = do { var <- getVal
 parseVal :: ValType -> GenParser Word8 Int Value
 parseVal Tfloat    = getVal >>= (return.Vfloat)
 parseVal Tint      = getVal >>= (return.Vint)
---parseVal Tint      = getInt >>= (return.Vint)
 parseVal (Tstr n)  = do { b <- count n anyToken
                         ; let p = unsafePerformIO $ 
                                   allocaBytes (n+1) (\tmp->
@@ -269,20 +268,6 @@ getVal     = do { a <- anyToken
                 ; return $ unsafeCoerce v
                 }
                 
-                
-{-
-                ; let v = unsafePerformIO $ 
-                          allocaBytes 4 (\tmp->
-                          do { mapM_ (uncurry (pokeByteOff tmp)) (zip [0..3] [d,c,b,a])
-                             ; val <- peek tmp
-                             ; return val
-                             })
-                             
-                ; unsafePerformIO(putStrLn 
-                  $ (show a) ++ "\t" ++ (show b) ++ "\t" ++ (show c) 
-                             ++ "\t" ++ (show d) ++ "\t\t" ++ (show v)) 
-                  `seq` return v
--}
 
 -- Convert a stream of word 8's into a stream of values.
 
@@ -510,44 +495,3 @@ showGrid gr = do { putStrLn $ "  name: " ++ (show.name $ gr)
                           (Nothing, Just ub) -> "(?, "++(show ub)++")"
                           (Just lb, Just ub) -> "("++(show lb)++", "++(show ub)++")"
 
-
-{-
---
--- Code to support grid compression
--- Not needed (yet!)
-
-ga_gb :: Int -> V5D_field -> [Float] -> ([Float], [Float])
-ga_gb c gr vs 
-    = if dmax == 0.0 
-          then (map simple lmin, map (const 0.0) lmax)
-          else zipWith (normal c gmin dmax) lmin lmax
-      where
-          nrnc  = nr_rows gr * nr_cols gr
-          levs  = clumps (nr_levs gr) nrnc vs
-          lrng  = map d.range $ levs 
-          (lmin,lmax) = unzip lrng
-          gmin = minimum lmin
-          gmax = maximum lmax
-          ds   = map d lrng
-          dmax = maximum ds
-          simple v = if gmin==gmax then gmin else v
-
-
-d :: (Float, Float) -> Float
-d (l,u) = if l >= imax && u <= imin then 0 else u-l
-
-range :: [Word8] -> (Word8, Word8)
-range = (minimum $ imin:real, maximum $ imax:real)
-        where
-            imin =  1.0e30
-            imax = -1.0e30
-            real = filter (< imin) (raw ds)
-
-normal 1 dm = normal' (dmax/254.0)
-normal 2 dm = normal' (dmax/65534.0)
-normal 4 _  = \_ _ -> (1.0, 0.0)
-
-normal' ival gmin lmin lmax 
-    = (ival, if lmin > lmax then 0.0 else gmin + ival * (round $ (lmin-gmin)/ival))
-
--}

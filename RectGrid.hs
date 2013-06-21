@@ -9,7 +9,6 @@ import Prelude hiding (lookup)
 import Dataset
 import Geometries
 import CellTypes
-import Graphics.Rendering.OpenGL.GL(Vertex2(..), Vertex3(..))
 import Control.Applicative
 
 import Data.Array
@@ -17,7 +16,6 @@ import Data.List ((!!), elemIndex,zipWith4, nub)
 import Data.Maybe (fromJust)
 import Data.Char
 
-import Data.Array.Repa (Shape, Z(..), (:.)(..), extent, DIM3, DIM2, fromFunction)
 import Numeric
 
 -- Cells in the dataset are cubes.
@@ -175,18 +173,6 @@ instance Cell Cell_8 MyVertex where
                     Cell_8 (q A) (q B) (q C) (q D) (q E) (q F) (q G) (q H)
                 edgeToPair (Edge a b) = (a,b)
             in (table!)
-{-
-  mc_case = let table = array (minBound,maxBound::Cell_8 Bool)
-                              (map (\ (a,b)-> ( markingToCellBool a
-                                              , map unpackTri b) )
-                                   (cell_table CellTypes.cube))
-                markingToCellBool m = let q v = v`elem`m in
-                    Cell_8 (q A) (q B) (q C) (q D) (q E) (q F) (q G) (q H)
-                edgeList [] = []
-                edgeList ((Edge (Edge u v) (Edge w x)):es) = (u,v) : (w,x) : edgeList es
-                unpackTri t = let [u,v,w] = nub $ edgeList t in FacTri u v w
-            in (table!)
--}
 
 instance Cell Cell_4 MyVertex where
   data Facet Cell_4 x = FacLine x x

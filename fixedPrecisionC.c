@@ -85,28 +85,14 @@ sample fixedPrecNegate(sample v) {
 sample fixedPrecMinus(sample v0, sample v1) {
   return fixedPrecPlus(v0,fixedPrecNegate(v1));
 }
-/*
-sample fixedPrecSqroot(sample v) {
-  int m = mantissa(v);
-  int e = exponent(v);
-  if ((e%2)==1) { e = e-1; m = m*10; }
-  return sampleOf( (int)(sqrt((double)(10000*m)) / 100), e/2 );
-}
-*/
+
 sample fixedPrecSqroot(sample v) {
   int m = mantissa(v);
   int e = exponent(v);
   if (m==0 && e==0) return v;
   if (m<0) { fprintf(stderr, "sqroot: negative argument"); exit(0); }
-  /*
-  printf("initial sample value: m = %d, e = %d\n", m, e);
-  printf("exponent modulo? two: %d\n", e%2);
-  */
   if ((e%2)!=0) { e = e-1; m = m*10; }
-  /* printf("evening the exponent: m = %d, e = %d\n", m, e); */
   while (m < 1000000) { m = m*100; e = e-2; }
-  /* printf("magnifying  mantissa: m = intSqroot(%d) = %d; e = quot2(%d), result = %d\n",
-            m, intSqrootC(m), e, quot2(e)); */
   return sampleOf(intSqrootC(m),quotC(e,2));
 }
 

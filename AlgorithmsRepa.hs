@@ -67,15 +67,10 @@ iso3D th grid = iso' 0 0 0
                                                                          (Vertex3 ir  j1r k1r)
                                                                  )) ts) : iso' k j (i+1) 
                                           
---iso :: (Interp v, InvInterp v, Enum v, Interp g, Elt v, Shape sh) => v -> Array sh v -> [[g]]
+
 {-# SPECIALISE iso :: (IsoCell DIM3 Cell_8 Vertex3) => Double -> (Data.Array.Repa.Array DIM3 Double) -> [[Vertex3 GLfloat]]
  #-}
-iso th arr = {-unsafePerformIO((putStrLn $ "Extent: "++(show . extent $ arr)) >> 
-                             (mapM_ print (icells $ extent arr))) `seq` -}
-             filter (not . null) . map (surf th arr) $ (icells $ extent arr) 
---iso th arr = map (surf th arr) (icell $ extent arr) 
-             -- where
-                 --surf :: (IsoCells shCell c v => c Int -> [g]
+iso th arr = filter (not . null) . map (surf th arr) $ (icells $ extent arr) 
 {-# INLINE iso #-}
 
                  
@@ -86,13 +81,10 @@ surf th arr c = map mkgeom . mc_case . fmap (>th) $ sample
                       mkgeom = surf_geom th sample (fmap iverts c)
 {-# INLINE surf #-}
 
---surf_geom :: (Interp a, InvInterp a, Interp g, Cell c v, Enum v) =>
---    a -> c a -> c g -> (v,v) -> g
 {-# SPECIALISE surf_geom :: Double -> Cell_8 Double -> Cell_8 (Vertex3 GLfloat) -> (MyVertex,MyVertex) -> Vertex3 GLfloat
  #-}
 surf_geom th sample geom (v0,v1)
-    = {- unsafePerformIO((print sample) >> (print geom) >> (print "----")) `seq` -} 
-      interp (inv_interp th samp_0 samp_1) geom_0 geom_1
+    = interp (inv_interp th samp_0 samp_1) geom_0 geom_1
       where
           samp_0 = select v0 sample
           samp_1 = select v1 sample

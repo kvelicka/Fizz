@@ -13,12 +13,8 @@ import Dataset
 
 --import RectGrid
 import Dataset
--- import qualified "dph-prim-seq" Data.Array.Parallel.Unlifted as U
--- import qualified Data.Array.Parallel.Unlifted.Parallel as UP
--- import qualified Data.Array.Parallel.Unlifted.Sequential as US
 import qualified Data.Array.Parallel.Unlifted as U
 
--- import Data.Array.Repa (Array, fromList, toIndex, Shape, DIM3, DIM2, Z(..), (:.)(..), (!:), foldAll, fromFunction, fromUArray, force, fromIndex, extent, size)
 import Data.Maybe
 import System.IO.Unsafe (unsafePerformIO)
 
@@ -80,15 +76,6 @@ range_size (Single _)      = 1
 range_size (Range f t)     = t - f + 1
 range_size (Sampled f s t) = ((t - f) `div` s) + 1
 
-{-
-data Slice = Slice { x :: Range Int
-                   , y :: Range Int
-                   , z :: Range Int
-                   , t :: Range Int
-                   , s :: [Species]
-                   }
-  deriving (Eq,Show)
--}
 type Time = Int
 
 data VisData = From (Range Int) (Range Int) (Range Int) Time Species
@@ -113,17 +100,6 @@ astroFour t s = From (Sampled 0 4 599) (Sampled 0 4 247) (Sampled 0 4 247) t s
 sliceZ :: Int -> VisData -> VisData
 sliceZ z (From x y _ t s) = (From x y (Single z) t s)
 
-{-
-showSlice :: Slice -> String
-showSlice slice = "x"++show (x slice)
-                  ++"y"++show (y slice)
-                  ++"z"++show (z slice)
-                  ++"t"++show (t slice)
-                  ++"."++concatMap show (s slice)
-
-readSlice :: String -> Either String Slice
-readSlice = fst . runParser slice
--}
 -- Parsers ------------------------------------------------------------------
 species :: Parser Char Species
 species = do satisfy (=='D'); return D

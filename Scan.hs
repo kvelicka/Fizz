@@ -88,7 +88,6 @@ summarise :: Handle -> Int -> String -> String -> Int -> IO()
 summarise h xsz base attr t
     = do { ss <- read_data (base++"t"++(show t)++"."++attr++".dat")
          ; let fpvs = map fromSample ss
-         -- ; mapM_ (putStrLn.show) $ ss
          ; let sums = foldl' (zipWith (+)) (replicate xsz (FP 0 0)) (splitAt xsz fpvs)
          ; mapM_ outsample (zip [0..] sums)
          }
@@ -98,4 +97,3 @@ summarise h xsz base attr t
                               ; writeSample h (toSample v)
                               }
          writeSample h v = Fast.hPut h $ Fast.pack $ sampleToBytes v
-         -- mysum a b = let x :: FixedPrecision = a + b in unsafePerformIO(putStrLn $ (show a)++"\t"++(show b)++"\t"++(show x)) `seq` x

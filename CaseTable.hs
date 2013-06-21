@@ -56,7 +56,7 @@ allPossTriangles g@(PolyTope faces verts) =
                   {- if any edge is on a face, it must bound either a
                      marked or unmarked region -}
                 , all (validTriEdge g) result
-                  {- not all on same face -}
+                  -- not all on same face
                 , not (flip any faces (\f-> all (triEdgeInFace f) result))
                 ]
         -- eliminate rotational isomorphisms, i.e. abc == bca == acb etc
@@ -127,12 +127,6 @@ isBorder (face:faces) e@(Edge (Edge a b) (Edge c d))
                                 = all (`elem` face) [a,b,c,d]
                                   || isBorder faces e
 
-
-----
--- main = mapM_ print (cell_table square)
---main = mapM_ print [ (m, length (generatorWithState 4 (incident cube m)))
---                   | m <- markings cube ]
-
 cell_table :: Eq a => PolyTope a -> [(Marking a, [Triangle a])]
 cell_table g = [(m, cell_case g m) | m <- markings g]
 
@@ -168,12 +162,6 @@ cell_case g@(PolyTope faces edges) m
 
 markings :: Eq a => PolyTope a -> [Marking a]
 markings g = powerset (vertices g) 
-{- same ordering as:
-markings g = (sortBy compareBits . powerset . vertices) g
-  where
-  bits m = map (`elem` m) (vertices g)
-  compareBits m m' = compare (bits m) (bits m')
--}
 
 vertices :: Eq a => PolyTope a -> [a]
 vertices (PolyTope _ edges) = nub $ concat [[v1,v2] | (Edge v1 v2) <- edges]
