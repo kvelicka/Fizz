@@ -2,12 +2,36 @@
 
 module Dataset where
 
-import Data.Array.Repa
+import qualified Data.ByteString as BS
 
 class Dataset d t where
   resource :: d -> String
   read_data :: d -> IO (Grid DIM3 t)
 
+data Z = Z
+data a :. b = a :. b
+
+class Dim d where
+  size :: d -> Int
+  dims :: d -> [Int]
+  
+instance Dim Z where
+  size = const 0
+  dims = const []
+  
+instance Dim a => Dim (a :. Int) where
+  size (a :. b) = size a * b
+  dims (a :. b) = dims a ++ [b]
+  
+type DIM0 = Z
+type DIM1 = DIM0 :. Int
+type DIM2 = DIM1 :. Int
+type DIM3 = DIM2 :. Int
+
+dim_x, dim_y, dim_z :: Dim d => d -> Int
+dim_x d = let [_,_,x] = dims d in x
+dim_y d = let [_,y,_] = dims d in y 
+dim_z d = let [z,_,_] = dims d in z
 
 data Grid sh v = Grid { origin  :: String
                       , field   :: String
@@ -15,17 +39,9 @@ data Grid sh v = Grid { origin  :: String
                       , time    :: Int
                       , minv    :: v
                       , maxv    :: v
-                      , values  :: Array U DIM1 Float
+                      , values  :: BS.ByteString
                       } deriving Show
 
 type Grid3D a = Grid DIM3 a
 type Grid2D a = Grid DIM2 a
-
-
-dim_x, dim_y, dim_z :: Shape d => d -> Int
-dim_x d = let [_,_,x] = listOfShape d in x
-dim_y d = let [_,y,_] = listOfShape d in y 
-dim_z d = let [z,_,_] = listOfShape d in z
-
-
 
