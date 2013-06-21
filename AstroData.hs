@@ -280,3 +280,17 @@ bytesToValues bs
                            c16 :: Int16 = fromIntegral c `shiftL`  8
                            d16 :: Int16 = fromIntegral d
 -}
+
+read_data :: String -> Fast.ByteString
+read_data fnm = unsafePerformIO (            
+                do h <- openFile fnm ReadMode 
+                   Fast.hGetContents h)
+         
+read_bounds fnm = unsafePerformIO $                   
+                  do has_summary <- fileExist fnm
+                     if has_summary
+                       then do let vals = read_data fnm
+                               let [min, max]  = bytesToValues vals
+                               -- let max  = decode 1 vals
+                               return $ Just (min,max)
+                       else return Nothing
