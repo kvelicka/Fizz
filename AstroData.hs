@@ -172,7 +172,7 @@ data Field = Field { name    :: String
                    , time    :: Int
                    , minv    :: Float
                    , maxv    :: Float
-                   , source  :: Source
+                   , source  :: BS.ByteString
                    }
 
 read_astro_file :: String -> IO Field
@@ -189,16 +189,10 @@ read_astro_data d@(From x y z t s)
          ; b <- BS.hGetContents h
          ; has_summary <- fileExist summaryf
          ; if has_summary
-           then do { hs <- openFile summaryf ReadMode
-                   ; bs <- BS.hGetContents hs
-                   ; let [minv,maxv] = map sampleToFloat . bytesToSamples $ bs
-                   ; return $ Field (show s) basename x y z t minv maxv (Bytes b)
-                   }
-           else do { let samples = map sampleToFloat . bytesToSamples $ b
-                   ; let minv = minimum samples
-                   ; let maxv = maximum samples
-                   ; return $ Field (show s) basename x y z t minv maxv (Samples samples)
-                   }
+         ; hs <- openFile summaryf ReadMode
+         ; bs <- BS.hGetContents hs
+         ; let [minv,maxv] = map sampleToFloat . bytesToSamples $ bs
+         ; return $ Field (show s) basename x y z t minv maxv b
          }
   
 bytesToValues :: Fractional a => Int -> BS.ByteString -> a

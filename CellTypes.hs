@@ -1,12 +1,16 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, TypeFamilies #-}
 
 module CellTypes (module CellTypes, module CaseTable) where
-import Dataset
 
-import Maths
-import CaseTable
-import Graphics.Rendering.OpenGL as GL
 import Control.Applicative
+import qualified Data.ByteString as BS
+import Graphics.Rendering.OpenGL as GL
+
+import CaseTable
+import Dataset
+import Maths
+
+
 
 
 class (Functor c, Enum v) => Cell c v | c -> v where
@@ -16,9 +20,6 @@ class (Functor c, Enum v) => Cell c v | c -> v where
 --  renderF  :: Facet  -> IO()
   
 newtype Stream c v a = Stream { stream :: [c a] }
-
-toList :: Stream c v a -> [c a]
-toList (Stream [s]) = [s]
 
 newtype Cells c v a = Cells { cells :: [c a] } deriving (Show)
 
