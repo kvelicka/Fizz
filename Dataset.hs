@@ -36,9 +36,9 @@ dim_z d = let [z,_,_] = dims d in z
 
 -- Sampling datatype, that may be used to downsample datasets or take slices
 data Sampling a = Single  a
-             | Range   a a
-             | Sampled a a a
-               deriving Eq
+                | Range   a a
+                | Sampled a a a
+                  deriving Eq
 
 instance (Show a, Num a) => Show (Sampling a) where
   show (Single  i)     = show i
@@ -59,19 +59,21 @@ range_size (Sampled f s t) = ((t - f) `div` s) + 1
 
 -- Container for sampling and values
 data Values = Values { dimensions :: (Sampling Int, Sampling Int, Sampling Int)
-                         , values :: BS.ByteString
-                         }
+                     , datastream :: BS.ByteString
+                     } deriving Show
 
-data MinMaxValues a = Unknown | Bounded a a | Exact a a
-
+-- Datatype to bound the magnitude of values in the dataset
+data MinMaxValues a = Unknown 
+                    | Bounded a a 
+                    | Exact a a
+                      deriving Show
 
 -- A generic grid to accomodate various datasets
 data Grid sh v = Grid { origin  :: String
                       , field   :: String
                       , shape   :: sh
                       , time    :: Int
-                      , minv    :: MinMaxValues v
-                      , maxv    :: MinMaxValues v
+                      , min_max :: MinMaxValues v
                       , values  :: Values
                       } deriving Show
 

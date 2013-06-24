@@ -48,31 +48,9 @@ instance Show Species where
   show Cz   = "Cz"
   show Mv   = "Mv"
 
-
-data Range a = Single  a
-             | Range   a a
-             | Sampled a a a
-               deriving Eq
-
-instance (Show a, Num a) => Show (Range a) where
-  show (Single  i)     = show i
-  show (Range   i j)   = show i ++"-"++show j
-  show (Sampled i j k) = show i ++"-"++show (i+j)++"-"++show k
-
-
-range_to_list :: (Num a, Enum a) => Range a -> [a]
-range_to_list (Single i)      = [i]
-range_to_list (Range f t)     = [f..t]
-range_to_list (Sampled f s t) = [f,s+f .. t]
-
-range_size :: Integral a => Range a -> a
-range_size (Single _)      = 1
-range_size (Range f t)     = t - f + 1
-range_size (Sampled f s t) = ((t - f) `div` s) + 1
-
 type Time = Int
 
-data VisData = From (Range Int) (Range Int) (Range Int) Time Species
+data VisData = From (Sampling Int) (Sampling Int) (Sampling Int) Time Species
                deriving Eq
 
 instance Show VisData where
@@ -145,7 +123,7 @@ slice = do satisfy (=='x'); x <- (parse_range integer)
            satisfy (=='.'); ss <- species
            return $ From x y z t ss
 
-parse_range :: Num a => Parser Char a -> Parser Char (Range a)
+parse_range :: Num a => Parser Char a -> Parser Char (Sampling a)
 parse_range p = do i <- p
                    (do satisfy (=='-')
                        j <- p
@@ -164,35 +142,23 @@ integer = do cs <- many1 (satisfy isDigit)
 
 -- Low-level IO and conversion ----------------------------------------------
 
-data Field = Field { name    :: String
-                   , origin  :: String
-                   , range_x :: Range Int
-                   , range_y :: Range Int
-                   , range_z :: Range Int
-                   , time    :: Int
-                   , minv    :: Float
-                   , maxv    :: Float
-                   , source  :: BS.ByteString
-                   }
-
-read_astro_file :: String -> IO Field
+read_astro_file :: String -> IO (Grid DIM3 Float)
 read_astro_file str
     = read_astro_data (result . fst . runParser slice $ str)
       where result (Left err) = error err       
             result (Right ok) = ok
 
-read_astro_data :: VisData -> IO Field
-read_astro_data d@(From x y z t s)
+read_astro_data :: VisData -> IO (Grid DIM3 Float)
+read_astro_data d@(From xr yr zr t s)
     = do { let basename = show d
          ; let summaryf = basename ++ ".summary"
+         ; let dim = Z :. range_size zr :. range_size yr :. range_size xr
          ; h <- openFile (basename ++ ".dat") ReadMode 
          ; b <- BS.hGetContents h
-         ; has_summary <- fileExist summaryf
-         ; if has_summary
          ; hs <- openFile summaryf ReadMode
          ; bs <- BS.hGetContents hs
          ; let [minv,maxv] = map sampleToFloat . bytesToSamples $ bs
-         ; return $ Field (show s) basename x y z t minv maxv b
+         ; return $ Grid basename (show s) dim t (Exact minv maxv) (Values (xr,yr,zr) b)
          }
   
 bytesToValues :: Fractional a => Int -> BS.ByteString -> a

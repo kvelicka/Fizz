@@ -3,8 +3,8 @@
 module CellTypes (module CellTypes, module CaseTable) where
 
 import Control.Applicative
-import qualified Data.ByteString as BS
 import Graphics.Rendering.OpenGL as GL
+import qualified Data.ByteString as BS
 
 import CaseTable
 import Dataset

@@ -14,6 +14,7 @@ module PictureDSL where
 --import Graphics.Rendering.OpenGL.GL.VertexSpec
 import Control.Applicative
 import Prelude hiding (lookup)
+import qualified Data.ByteString as BS
 import qualified Graphics.Rendering.OpenGL.GL as GL
 import System.IO.Unsafe
 
@@ -128,9 +129,9 @@ from4 t s = astroFour t s
 --   < - back one frame
 --   > - forward one frame
 
-data Picture v = Contour Colour (Range v) (Grid2D v) -- (DataExpr v)
-                         | ASurface Colour (Range v) (Grid3D v) -- (DataExpr v)
-                         | Surface Colour (Range v) (Grid3D v) -- (DataExpr v)
+data Picture v = Contour Colour (Sampling v) (Grid2D v) -- (DataExpr v)
+                         | ASurface Colour (Sampling v) (Grid3D v) -- (DataExpr v)
+                         | Surface Colour (Sampling v) (Grid3D v) -- (DataExpr v)
                          | Volume Colour (DataExpr v)
                          | Slice  Colour (DataExpr v)
                          | Hedgehog Colour (DataExpr v) (DataExpr v) (DataExpr v)
@@ -169,7 +170,7 @@ slice_plane (Dim3D _ r _) | singleton r = Y_equals . head . range_to_list $ r
 slice_plane (Dim3D _ _ r) | singleton r = Z_equals . head . range_to_list $ r
 slice_plane _                           = error "slice_plane: no singleton dimension"
 
-singleton :: Ord a => Range a -> Bool 
+singleton :: Ord a => Sampling a -> Bool 
 singleton (Single _)      = True
 singleton (Range f t)     = f == t
 singleton (Sampled f s t) = f == t || f == s || s > t
@@ -354,9 +355,9 @@ eval_picture (Surface pal levels field)
       where
           -- (Use ads) = de -- eval_data env de
           -- field = read_astro ads
-          mkgrid = cubicGrid (shape field)         -- ::   [a] -> Cells Cell_8 MyVertex a
-          points = mkgrid $ cubicPoints field      -- ::   Stream Cell_8 Vertex3
-          vcells = mkgrid $ toList $ values field  -- ::   Stream Cell_8 Double
+          mkgrid = cubicGrid (shape field)                      -- ::   [a] -> Cells Cell_8 MyVertex a
+          points = mkgrid $ cubicPoints field                   -- ::   Stream Cell_8 Vertex3
+          vcells = mkgrid $ BS.unpack $ datastream $ values field  -- ::   Stream Cell_8 Double
           t_vals = range_to_list levels
           colour = transfer pal 1.0 1.0 (toFloat.length $ t_vals)
           contours = map (\t -> concat $ Algorithms.isosurface t vcells points) $ t_vals
