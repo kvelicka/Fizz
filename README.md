@@ -7,7 +7,8 @@ The version in this file is an attempt to convert the visualizer from a specific
 An attempt was made to make the original code more modular, but that work was not finished. This project will attempt to:
 
 1. Get the code to a state where it is running properly
-2. Put the code in loosely-coupled modules
-3. Generalize the code to accept more generic datasets
-4. Improve the performance of the visualizer
-5. Extend the capabilities of the visualizer
+2. Clean the code up
+3. Put the code in loosely-coupled modules
+4. Generalize the code to accept more generic datasets
+5. Improve the performance of the visualizer
+6. Extend the capabilities of the visualizer
