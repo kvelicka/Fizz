@@ -13,9 +13,9 @@ import Data.Maybe (fromJust)
 import Prelude hiding (lookup)
 import Graphics.Rendering.OpenGL.GL (Vertex3(..))
 
+import CaseTable
 import CellTypes
 import Dataset
-import Geometries
 
 -- Cells in the dataset are cubes.
 
@@ -242,42 +242,15 @@ cubicGrid (Z :. zmax :. ymax :. xmax)
               | j==(ymax-1)   =    discontinuities (0,0,k+1) (drop (xmax-1) xs)
               | i==(xmax-1)   =    discontinuities (0,j+1,k) xs
               | otherwise     = x: discontinuities (i+1,j,k) xs
-{-
--- Generate a stream (dataset) of 8-tuple cell samples taken from
--- an input stream of values.  The dataset is an (xmax x ymax x zmax)
--- cube where the components here refer to the size of a dimension 
--- in CELLs.
-cubicGrid :: DIM3 -> [a] -> Stream Cell_8 MyVertex a
-cubicGrid (Z :. zmax :. ymax :. xmax) 
-    = Stream . (discontinuities (0,0,0)) . zipCube
-      where
-          zipCube stream = zipWith8 Cell_8 stream
-                                           (drop 1 stream)
-                                           (drop (line+1) stream)
-                                           (drop line stream)
-                                           (drop plane stream)
-                                           (drop (plane+1) stream)
-                                           (drop (plane+line+1) stream)
-                                           (drop (plane+line) stream)
-          line  = xmax+1
-          plane = (xmax+1)*(ymax+1)
 
-          discontinuities _ [] = []
-          discontinuities (i,j,k) (x:xs)
-              | k==zmax   = []
-              | j==ymax   =    discontinuities (0,0,k+1) (drop xmax xs)
-              | i==xmax   =    discontinuities (0,j+1,k) xs
-              | otherwise = x: discontinuities (i+1,j,k) xs
--}
-
-squareGrid :: (Int,Int) -> [a] -> Stream Cell_4 MyVertex a
-squareGrid (xmax,ymax) 
+squareGrid :: DIM2 -> [a] -> Stream Cell_4 MyVertex a
+squareGrid (Z :. ymax :. xmax) 
     = Stream . (discontinuities (0,0)) . zipSquare
       where
           zipSquare stream = zipWith4 Cell_4 stream
-                                           (drop 1 stream)
-                                           (drop (line+1) stream)
-                                           (drop line stream)
+                                             (drop 1 stream)
+                                             (drop (line+1) stream)
+                                             (drop line stream)
           line  = xmax+1
           discontinuities _ [] = []
           discontinuities (i,j) (x:xs)

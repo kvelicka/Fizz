@@ -1,6 +1,6 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, TypeFamilies #-}
 
-module CellTypes (module CellTypes, module CaseTable) where
+module CellTypes where
 
 import Control.Applicative
 import Graphics.Rendering.OpenGL as GL

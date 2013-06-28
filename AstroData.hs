@@ -15,6 +15,7 @@ import Data.Word
 import GHC.Int
 import Numeric
 import qualified Data.ByteString as BS
+import Prelude hiding (lookup)
 import System.IO
 import System.IO.Unsafe (unsafePerformIO)
 import System.Posix.Files
@@ -27,7 +28,7 @@ import Sample hiding (s)
 -- Dataset definitions ------------------------------------------------------
 data Species = D | G | H | Hp | He | Hep | Hepp | Hm | H2 | H2p
              | R | S | H2xD | Cx | Cy | Cz | Mv
-  deriving (Eq,Ord)
+             deriving (Eq,Ord)
 
 instance Show Species where
   show D    = "D"
@@ -61,7 +62,11 @@ instance Show VisData where
                                  , ".", (show s)
                                  ]
 
-type AstroData = Grid Float
+lookup :: Context -> VisData -> Grid3D Float
+lookup []     vd = error $ "lookup context: Grid "++(show vd)++" not found in context."
+lookup (f:fs) vd 
+    | origin f == (show vd)  = f
+    | otherwise              = lookup fs vd
 
 astroFull :: Time -> Species -> VisData
 astroFull t s = From (Range 0 599) (Range 0 247) (Range 0 247) t s
@@ -161,24 +166,6 @@ read_astro_data d@(From xr yr zr t s)
          ; return $ Grid basename (show s) dim t (Exact minv maxv) (Values (xr,yr,zr) b $ bytesToFloats b)
          }
   
-bytesToValues :: Fractional a => Int -> BS.ByteString -> a
-bytesToValues !i bs
-    = let start = fromIntegral $ i*4
-          a = bs `BS.index` start
-          b = bs `BS.index` (start + 1)
-          c = bs `BS.index` (start + 2)
-          d = bs `BS.index` (start + 3)
-          a16 :: Int16 = fromIntegral a `shiftL` 8
-          b16 :: Int16 = fromIntegral b 
-          c16 :: Int16 = fromIntegral c `shiftL`  8
-          d16 :: Int16 = fromIntegral d    
-          exp = a16 .|. b16
-          man = c16 .|. d16
-          val | exp < 0   = toInteger man % (10 ^ negate (toInteger exp))
-              | otherwise = toInteger man * (10^exp) % 1  
-      in realToFrac val
-
-
 bytesToFloats :: BS.ByteString -> [Float]
 bytesToFloats bs 
     | BS.null bs   = []

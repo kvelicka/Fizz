@@ -18,9 +18,10 @@
 module Colour where
 
 import Control.Applicative
-import qualified Graphics.Rendering.OpenGL.GL as GL
-import Maths
 import Data.Array (listArray, (!))
+import qualified Graphics.Rendering.OpenGL.GL as GL
+
+import Maths
 
 -- A small number of Brewer palettes have been selected.
 data Palette = MReds | MBlues | MGreens | Yellows

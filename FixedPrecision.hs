@@ -1,10 +1,11 @@
 module FixedPrecision where
 
-import Text.ParserCombinators.Poly {- .Lazy -}
+import Data.Char
 import Data.Int
 import Data.Ratio
-import Data.Char
 import Prelude hiding (exponent)
+import Text.ParserCombinators.Poly
+
 import IntOps
 
 data FixedPrecision = FP

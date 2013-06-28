@@ -26,19 +26,3 @@ instance Coord2D Vertex3 where
 
 instance Coord3D Vertex3 where
   z_ (Vertex3 _ _ pz) = pz
-
-{-
-instance Functor Vertex2 where
-  fmap f (Vertex2 x y) = Vertex2 (f x) (f y)
-
-instance Functor Vertex3 where
-  fmap f (Vertex3 x y z) = Vertex3 (f x) (f y) (f z)
-
-instance Applicative Vertex2 where
-  pure x = Vertex2 x x
-  (Vertex2 f1 f2) <*> (Vertex2 v1 v2) = Vertex2 (f1 v1) (f2 v2)
-
-instance Applicative Vertex3 where
-  pure x = Vertex3 x x x
-  (Vertex3 f1 f2 f3) <*> (Vertex3 v1 v2 v3) = Vertex3 (f1 v1) (f2 v2) (f3 v3)
--}

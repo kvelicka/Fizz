@@ -81,3 +81,4 @@ data Grid sh v = Grid { origin  :: String
 type Grid2D a = Grid DIM2 a
 type Grid3D a = Grid DIM3 a
 
+type Context = [Grid3D Float]

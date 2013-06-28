@@ -18,13 +18,11 @@ import qualified Data.ByteString as BS
 import qualified Graphics.Rendering.OpenGL.GL as GL
 import System.IO.Unsafe
 
--- import qualified CellTypes as Cell
 import Algorithms
-import AstroData -- hiding (Slice)
+import AstroData
 import CellTypes
 import Colour
 import Dataset
-import Geometries
 import Graphics
 import Maths
 import RectGrid
@@ -130,22 +128,21 @@ from4 t s = astroFour t s
 --   > - forward one frame
 
 data Picture v = Contour Colour (Sampling v) (Grid2D v) -- (DataExpr v)
-                         | ASurface Colour (Sampling v) (Grid3D v) -- (DataExpr v)
-                         | Surface Colour (Sampling v) (Grid3D v) -- (DataExpr v)
-                         | Volume Colour (DataExpr v)
-                         | Slice  Colour (DataExpr v)
-                         | Hedgehog Colour (DataExpr v) (DataExpr v) (DataExpr v)
-                         | Scatter (DataExpr v) (DataExpr v) (DataExpr v)
-                         | Draw [Picture v]
-                         | Anim [Picture v]
+               | ASurface Colour (Sampling v) (Grid3D v) -- (DataExpr v)
+               | Surface Colour (Sampling v) (Grid3D v) -- (DataExpr v)
+               | Volume Colour (DataExpr v)
+               | Slice  Colour (DataExpr v)
+               | Hedgehog Colour (DataExpr v) (DataExpr v) (DataExpr v)
+               | Scatter (DataExpr v) (DataExpr v) (DataExpr v)
+               | Draw [Picture v]
+               | Anim [Picture v]
 
 
 -- Implementing the DSL --------------------------------------
 --
 -- Calculate the astro files required to generate a given picture.
 
-{-
-file_list :: Real v => Picture v -> [(String, IO (Grid v))]
+file_list :: Real v => Picture v -> [(String, IO (Grid sh v))]
 file_list (Contour _ _ d)    = expr_list d
 file_list (Surface _ _ d)    = expr_list d
 file_list (Volume _ d)       = expr_list d
@@ -154,11 +151,11 @@ file_list (Scatter d1 d2 d3) = concatMap expr_list [d1, d2, d3]
 file_list (Draw ps)          = concatMap file_list ps
 file_list (Anim ps)          = concatMap file_list ps
 
-expr_list :: DataExpr v -> [(String, IO (Grid v))]
+expr_list :: DataExpr v -> [(String, IO (Grid sh v))]
 expr_list (Use d)      = [(resource d, read_data d)]
-expr_list (Derive _ e) = expr_list e
-expr_list (Select _ e) = expr_list e
--}
+--expr_list (Derive _ e) = expr_list e
+--expr_list (Select _ e) = expr_list e
+
 -- For the Contour command, the slice plane is implicit;
 -- the following function determines which plane is 
 -- being used.
@@ -214,9 +211,11 @@ transfer (X11 names) alpha minv maxv
 -- yield a field (see RectGrid) that contains the values to
 -- be visualized.
 
-{-
-eval_data :: Eq v => Env v -> DataExpr v -> Grid v
+
+eval_data :: Eq v => Context -> DataExpr v -> Grid3D v
 eval_data env (Use ds)      = lookup env (show ds)
+
+{-
 eval_data env (Derive f de) = ds { values = (map f) . values $ ds 
                                  , minv   = f $ minv ds
                                  , maxv   = f $ maxv ds
@@ -263,7 +262,7 @@ isosurf = Algorithms.iso
 
 {-# SPECIALISE eval_picture :: Picture Double -> HsScene
  #-}
-eval_picture :: (Enum a, Interp a, InvInterp a) => Picture a -> HsScene
+eval_picture :: (Enum a, Interp a, InvInterp a) => Context -> Picture a -> HsScene
 
 {-
 eval_picture env (Volume pal de)
@@ -351,11 +350,11 @@ eval_picture (ASurface pal levels field)
           geomlist = zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
 -}
                 
-eval_picture (Surface pal levels field)
+eval_picture env (Surface pal levels field)
     = Group static geomlist
       where
-          -- (Use ads) = de -- eval_data env de
-          -- field = read_astro ads
+          (Use ads) = eval_data env field
+          field = read_astro_data ads
           mkgrid :: [a] -> Stream Cell_8 MyVertex a
           mkgrid = cubicGrid (shape field)          -- :: [a] -> Stream Cell_8 MyVertex a
           points = mkgrid $ cubicPoints field       -- :: Stream Cell_8 MyVertex Vertex3
