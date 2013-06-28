@@ -113,7 +113,10 @@ ds :: Grid3D Double = Grid "" "" (Z :. 3 :. 5 :. 4) 0 0.0 2.0 ar
 
 -- main: if compiling, you must come up with a Picture expression here
 main :: IO ()
-main = do { putStrLn "it works"
+main = do { {-exec $ Anim [ Surface red (Single 2500) (from4 35 G)
+                        , Surface blue (Single 16000) (from4 35 G)
+                        , Surface green (Single 20000) (from4 35 G)
+                        ]-}
             --let spec :: Picture Float
             --    spec = Volume reds (from4 60 G)
               --spec = Scatter (from4 60 Mv) (from4 60 D) (from4 60 Hp)

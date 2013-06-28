@@ -158,7 +158,7 @@ read_astro_data d@(From xr yr zr t s)
          ; hs <- openFile summaryf ReadMode
          ; bs <- BS.hGetContents hs
          ; let [minv,maxv] = map sampleToFloat . bytesToSamples $ bs
-         ; return $ Grid basename (show s) dim t (Exact minv maxv) (Values (xr,yr,zr) b)
+         ; return $ Grid basename (show s) dim t (Exact minv maxv) (Values (xr,yr,zr) b $ bytesToFloats b)
          }
   
 bytesToValues :: Fractional a => Int -> BS.ByteString -> a
@@ -177,3 +177,17 @@ bytesToValues !i bs
           val | exp < 0   = toInteger man % (10 ^ negate (toInteger exp))
               | otherwise = toInteger man * (10^exp) % 1  
       in realToFrac val
+
+
+bytesToFloats :: BS.ByteString -> [Float]
+bytesToFloats bs 
+    | BS.null bs   = []
+    | otherwise      = (sampleToFloat $ Sample s):bytesToFloats post
+                       where
+                           (pre,post) = BS.splitAt 4 bs
+                           [a,b,c,d]  = BS.unpack pre
+                           s = (a32 .|. b32 .|. c32 .|. d32)
+                           a32 :: Word32 = fromIntegral a `shiftL` 24
+                           b32 :: Word32 = fromIntegral b `shiftL` 16
+                           c32 :: Word32 = fromIntegral c `shiftL`  8
+                           d32 :: Word32 = fromIntegral d

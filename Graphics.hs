@@ -8,6 +8,7 @@
 
 module Graphics where
 
+import Control.Applicative
 import Graphics.Rendering.OpenGL.GL
 import qualified Graphics.UI.GLUT as GLUT
 import Data.List (foldl')
@@ -56,7 +57,7 @@ surface_geom verts cols
                 ; polygonOffsetFill$= lt
                 }
 {-# INLINE surface_geom #-}
-             
+           
 
 ---------------------------------------------------------------------
 -- 2.  2D contour lines: construct a scene from a set of lines using

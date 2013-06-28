@@ -498,10 +498,11 @@ calibrate (Camera h view g) bounds'
 
 -- Add a scene; the scene objects are added to the top-level group
 -- directly beneath the camera.
-addScene :: IORef HsScene -> Extent -> [HsScene] -> IO()
-addScene g ex hs = 
+--addScene :: IORef HsScene -> Extent -> [HsScene] -> IO()
+addScene :: IORef HsScene -> [HsScene] -> IO()
+addScene g hs = 
   do { modifyIORef g (\(Camera h view (Group g s))
-                     -> calibrate (Camera h view (Group g (s++hs))) ex
+                     -> calibrate (Camera h view (Group g (s++hs))) $ collapse $ map extent hs
                      )
      ; postRedisplay Nothing
      }

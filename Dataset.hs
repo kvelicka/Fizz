@@ -60,6 +60,7 @@ range_size (Sampled f s t) = ((t - f) `div` s) + 1
 -- Container for sampling and values
 data Values = Values { dimensions :: (Sampling Int, Sampling Int, Sampling Int)
                      , datastream :: BS.ByteString
+                     , extract    :: [Float]
                      } deriving Show
 
 -- Datatype to bound the magnitude of values in the dataset

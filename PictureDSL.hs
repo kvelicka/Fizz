@@ -350,33 +350,23 @@ eval_picture (ASurface pal levels field)
           contours = map (\t -> Algorithms.isosurface t (toList $ values field) {- (values field) -}) $ t_vals
           geomlist = zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
 -}
-{-
-THIS IS THE "WORKING" ONE THAT I HAVE COMMENTED OUT - KARL                  
+                
 eval_picture (Surface pal levels field)
     = Group static geomlist
       where
           -- (Use ads) = de -- eval_data env de
           -- field = read_astro ads
-          mkgrid = cubicGrid (shape field)                      -- ::   [a] -> Cells Cell_8 MyVertex a
-          points = mkgrid $ cubicPoints field                   -- ::   Stream Cell_8 Vertex3
-          vcells = mkgrid $ BS.unpack $ datastream $ values field  -- ::   Stream Cell_8 Double
-          t_vals = range_to_list levels
+          mkgrid :: [a] -> Stream Cell_8 MyVertex a
+          mkgrid = cubicGrid (shape field)          -- :: [a] -> Stream Cell_8 MyVertex a
+          points = mkgrid $ cubicPoints field       -- :: Stream Cell_8 MyVertex Vertex3
+          vcells = mkgrid $ extract $ values field  -- :: Stream Cell_8 MyVertex Float
+          t_vals = fmap toFloat $ range_to_list levels             -- :: Num a ??
           colour = transfer pal 1.0 1.0 (toFloat.length $ t_vals)
           contours = map (\t -> concat $ Algorithms.isosurface t vcells points) $ t_vals
-          --arr = values field
-          --surf t = concat $ isosurf t arr
-          --contours = map surf t_vals
-          -- contours = map (\t -> Algorithms.isosurface t (Stream . toList .  values $ field) {- (values field) -}) $ t_vals
-          geomlist = --unsafePerformIO(
-                     --     (putStrLn $ "Input vcells :") >> 
-                     --     (mapM_ (putStrLn.show) (stream vcells)) >> 
-                     --     (putStrLn $ "Input points :") >>
-                     --     (mapM_ (putStrLn.show) (stream points))
-                     --     ) `seq` 
-                     zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
-          showit :: [a] -> IO()
-          showit x = putStrLn (show $ length x)
--}
+          geomlist = zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
+          
+          --showit :: [a] -> IO()
+          --showit x = putStrLn (show $ length x)
 
 {-
 eval_picture (AContour pal levels field)
