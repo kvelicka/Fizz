@@ -39,24 +39,17 @@
 
 module Main where
 
-import qualified Graphics.UI.GLUT as GLUT
 import Data.List (nubBy)
-
-import Dataset
-import PictureDSL
-import Render
-import Graphics
-import Maths
+import qualified Graphics.Rendering.OpenGL as GL
+import qualified Graphics.UI.GLUT as GLUT
 
 import AstroData
+import Dataset
+import Graphics
+import Maths
+import PictureDSL
+import Render
 
---import Data.Array.Repa (sumAll, DIM3, DIM2, (:.)(..), Z(..), (!:), fromList, Array)
---import Data.Array.Parallel.Unlifted (Elt, Array, fromList)
-
-import qualified Graphics.Rendering.OpenGL as GL
-
--- import RawData
--- import V5D
 
 -- TOP LEVEL: execute an expression specifying a picture.
 -- The picture expression is first traversed to determine 
@@ -68,7 +61,8 @@ import qualified Graphics.Rendering.OpenGL as GL
 -- make IO calls itself, simplifying the presentation.
 
 -- run this using GHCi
-exec :: (Enum v, Interp v, InvInterp v, Elt v) => Picture v -> IO()
+
+exec :: (Enum v, Interp v, InvInterp v) => Picture v -> IO()
 exec p = do { GLUT.initialize "Astro Viewer" [] >> return ()
             -- ; let resources = file_list p -- nubBy (\a b -> (fst a) == (fst b)) $ file_list p
             -- ; context <- mapM snd resources
@@ -119,7 +113,8 @@ ds :: Grid3D Double = Grid "" "" (Z :. 3 :. 5 :. 4) 0 0.0 2.0 ar
 
 -- main: if compiling, you must come up with a Picture expression here
 main :: IO ()
-main = do { --let spec :: Picture Float
+main = do { putStrLn "it works"
+            --let spec :: Picture Float
             --    spec = Volume reds (from4 60 G)
               --spec = Scatter (from4 60 Mv) (from4 60 D) (from4 60 Hp)
               --spec = Draw [ Contour reds (Sampled 2000 1000 20000)
@@ -127,9 +122,8 @@ main = do { --let spec :: Picture Float
               --            | z <- [0,8..247] ]
   
   
-          ; ds :: Grid3D Double <- read_astro_double (from4 60 G) --(from4 60 G) 
-          ; let dminv = minv ds
-          ; let dmaxv = maxv ds  
+--          ; ds :: Grid3D Float <- read_astro_data (from4 60 G) --(from4 60 G) 
+--          ; let minamx = min_max ds
   
   
           --; putStrLn $ "Got grid, indexing ..."      
@@ -137,12 +131,12 @@ main = do { --let spec :: Picture Float
           -- :: (Enum a, InvInterp a, Elt a) => Picture a 
           --; let v0 = values ds !: ((Z :. 247 :. 247 :. 599) :: DIM3)
           --; putStrLn $ "Got " ++ (show v0)  
-          ; let pic = Surface red  (Single 16000) ds
+ --         ; let pic = Surface red  (Single 16000) ds
           --; let pic = Draw [ Surface blue (Single {-(dminv + (dmaxv - dminv)/2.0)-} 20000) ds
           --                 , Surface red  (Single 16000) ds
           --                 ]  
           --; let pic = Contour blue (Single {-(dminv + (dmaxv - dminv)/2.0)-} 1.0 {-20000-}) ds
-          ; exec pic
+--          ; exec pic
           -- ; exec $ Volume Vis5D (from4 60 G)  -- newFingers -- turbulence_anim -- spec
           -- ; exec $ Surface red (Single 2500) (from4 60 G)  -- newFingers -- turbulence_anim -- spec
           }

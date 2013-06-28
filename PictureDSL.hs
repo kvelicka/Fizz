@@ -349,7 +349,9 @@ eval_picture (ASurface pal levels field)
           --contours = map surf t_vals
           contours = map (\t -> Algorithms.isosurface t (toList $ values field) {- (values field) -}) $ t_vals
           geomlist = zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
--}                     
+-}
+{-
+THIS IS THE "WORKING" ONE THAT I HAVE COMMENTED OUT - KARL                  
 eval_picture (Surface pal levels field)
     = Group static geomlist
       where
@@ -374,6 +376,7 @@ eval_picture (Surface pal levels field)
                      zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
           showit :: [a] -> IO()
           showit x = putStrLn (show $ length x)
+-}
 
 {-
 eval_picture (AContour pal levels field)

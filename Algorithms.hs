@@ -2,10 +2,11 @@
 
 module Algorithms (isosurface) where
 
+import Control.Applicative
+
+import CellTypes
 import Dataset
 import Maths
-import CellTypes
-import Control.Applicative
 
 -- Generate the isosurface at a given threshold. Note that the surface is 
 -- returned implicitly as a list of points - adjacent groups of three points
