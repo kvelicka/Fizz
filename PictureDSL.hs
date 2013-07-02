@@ -71,16 +71,16 @@ data Picture v = Contour Colour (Sampling v)
 
 -- View datatype combines a source with a picture description to make a generic
 -- picture type that is independent of the source
-data View v = Source :> (Picture v)
+data View d v = d :> (Picture v)
 
 
 -- Implementing the DSL --------------------------------------
 --
 -- Calculate the astro files required to generate a given picture.
 
-file_list :: Real v => View v -> [IO (FizzData sh v)]
+--file_list :: (Real v, Dataset Source) => View v -> [IO (FizzData3D v)]
 -- file_list (Contour _ _ d)    = expr_list d
-file_list (source :> _) = [readData source]
+--file_list (source :> _) = [readData source]
 -- file_list (Volume _ d)       = expr_list d
 -- file_list (Slice _ d)        = expr_list d
 -- file_list (Scatter d1 d2 d3) = concatMap expr_list [d1, d2, d3]
@@ -196,11 +196,11 @@ isosurf :: (Cell (ICell sh) a, Applicative (IVert sh), InvInterp a, IsoCells sh,
 isosurf = Algorithms.iso           
 -}
 
-evalPicture :: (Enum a, Interp a, InvInterp a, Dataset Source) => View a -> HsScene
+evalPicture :: (Enum a, Interp a, InvInterp a, Dataset d) => View d a -> HsScene
 evalPicture (source :> (Surface pal levels)) = 
   Group static geomlist
   where
-    field = readData source
+    field = unsafePerformIO $ readData source
     mkGrid :: [a] -> Stream Cell_8 MyVertex a
     mkGrid = cubicGrid (shape field)   
     points = mkGrid $ cubicPoints field

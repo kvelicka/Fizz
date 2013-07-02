@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables, FlexibleContexts #-}
 
 {- Viewer.hs: a domain-specific language and opengl viewer for
    multi-variate visualization.
@@ -40,10 +40,12 @@
 module Main where
 
 import Data.List (nubBy)
+
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLUT as GLUT
 
 import AstroData
+import Colour
 import Dataset
 import Graphics
 import Maths
@@ -62,7 +64,7 @@ import Render
 
 -- run this using GHCi
 
--- Reason: Old execution function, replaced with evalView
+{- Reason: Old execution function, replaced with evalView
 exec :: (Enum v, Interp v, InvInterp v) => Picture v -> IO()
 exec p = do { GLUT.initialize "Astro Viewer" [] >> return ()
             ; let resources = file_list p -- nubBy (\a b -> (fst a) == (fst b)) $ file_list p
@@ -76,15 +78,15 @@ exec p = do { GLUT.initialize "Astro Viewer" [] >> return ()
                                      (bbox 600 248 248) ] -}
             ; GLUT.mainLoop
             }
+-}
 
-
-evalView :: (Enum v, Interp v, InvInterp v) => View d v -> IO()
-evalView (source :> picture)  = 
+evalView :: (Enum v, Num v, Interp v, InvInterp v, Dataset d) => View d v -> IO()
+evalView view@(source :> picture)  = 
   do { GLUT.initialize "Astro Viewer" [] >> return ()
-     ; let resources = file_list p 
-     ; context <- resources
+     --; let resources = file_list view
+     --; context <- resources
      ; g <- openGraphics "Scene Viewer" (1000,800)
-     ; addScene g $ [eval_picture context p]
+     ; addScene g $ [evalPicture view]
      ; GLUT.mainLoop
      }
 
@@ -129,7 +131,7 @@ main = do { {-exec $ Anim [ Surface red (Single 2500) (from4 35 G)
                         , Surface blue (Single 16000) (from4 35 G)
                         , Surface green (Single 20000) (from4 35 G)
                         ]-}
-            evalView $ (from4 35 G) !> Surface red (Single 2500)
+            evalView $ (from4 35 G) :> (Surface red (Single 2500))
             --let spec :: Picture Float
             --    spec = Volume reds (from4 60 G)
               --spec = Scatter (from4 60 Mv) (from4 60 D) (from4 60 Hp)
