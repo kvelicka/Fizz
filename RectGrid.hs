@@ -204,13 +204,13 @@ instance Cell Cell_4 MyVertex where
 -- Generate a dataset consisting of the coordinates in a (xsz x ysz x zsz)-cube.
 -- Note that the origin of the cube is (0,0,0), and that the components refer
 -- to the number of CELLS along each dimension.
-cubicGeom :: (Floating a) => Grid DIM3 v -> Stream Cell_8 MyVertex (Vertex3 a)
+cubicGeom :: (Floating a) => FizzData DIM3 v -> Stream Cell_8 MyVertex (Vertex3 a)
 cubicGeom f 
     = cubicGrid (shape f) $ (cubicPoints f)
 
 -- Generate a list of coordinates for a (xsz x ysz x zsz)-cube, starting
 -- from (0,0,0).
-cubicPoints :: (Num a) => Grid DIM3 v -> [Vertex3 a]
+cubicPoints :: (Num a) => FizzData DIM3 v -> [Vertex3 a]
 cubicPoints g = [ Vertex3 (fromIntegral i) (fromIntegral j) (fromIntegral k)
                 | k <- [0 .. dim_z (shape g) - 1]
                 , j <- [0 .. dim_y (shape g) - 1]

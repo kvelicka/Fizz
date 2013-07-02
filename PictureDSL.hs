@@ -28,76 +28,6 @@ import Maths
 import RectGrid
 import Render
 
--- 1. Colours -------------------------------------------------------
---
--- We are typically interested in palettes of multiple colours,
--- and provide various methods for constructing these.  For
--- cases where we only want one colour, we also provide an
--- easy way of generating the appropriate (singleton) palette.
---
--- A colour scheme is either a brewer palette, the 
--- procedural colour generator from Vis5D, or a single
--- X11 colour specified by a (standard) name.
-
-data Colour = Brewer Palette | Vis5D | X11 [ColourName] deriving Show
-
--- For ease of specification, we define some simple "smart
--- constructors" for building colour schemes, applying the
--- suitable wrapper.  Note that the constructor function is 
--- simply the lower case version of the data constructor.
-
-reds, blues, greens, greys :: Colour
-mreds   = Brewer MReds
-mblues  = Brewer MBlues
-mgreens = Brewer MGreens
-reds    = Brewer Reds
-blues   = Brewer Blues
-greens  = Brewer Greens
-greys   = Brewer Greys
-yellows = Brewer Yellows
-
-vis5D :: Colour
-vis5D  = Vis5D
-
-blue, red, green, orange, white, yellow :: Colour
-blue    = X11 [Blue]
-red     = X11 [Red]
-green   = X11 [Green]
-orange  = X11 [Orange]
-white   = X11 [White]
-yellow  = X11 [Yellow]
-
-
--- 2. Data Expressions ----------------------------------------------
---
--- Constructors for data-generating expression.
--- We either use an AstroData file directly (specified via
--- the "From" constructor in AstroData), or we apply a
--- function to a data expression (e.g. (logBase 10.0)), or
--- we select a 2D axis-aligned plane from a data expression.
-
-data DataExpr v = Use VisData deriving Show
-{-
-data DataExpr v = forall d . (Show d, Dataset d v) => Use d
-                | Derive (v -> v) (DataExpr v)
-                | Select Plane (DataExpr v)
--}
--- For an axis-aligned cutting plane, we need to specify 
--- which axis is cut, and where.
-
-{-
-data Plane = X_equals Int | Y_equals Int | Z_equals Int 
-             deriving (Eq, Show)
-
-instance Show (DataExpr a) where
-    show (Use vd)      = "Use " ++ (show vd)
-    show (Derive _ de) = "Derive <func> -> " ++ (show de)
-    show (Select p de) = "Select "++(show p)++(show de)
--}
--- Again, smart constructors for building common cases:
--- where we are operating over a full-resolution astro
--- dataset, or where we are using the full dataset 
--- sampled every fourth point.
 fromFull :: Time -> Species -> VisData
 fromFull t s = astroFull t s
 
@@ -127,32 +57,38 @@ from4 t s = astroFour t s
 --   < - back one frame
 --   > - forward one frame
 
-data Picture v = Contour Colour (Sampling v) (Grid2D v) -- (DataExpr v)
-               | ASurface Colour (Sampling v) (Grid3D v) -- (DataExpr v)
-               | Surface Colour (Sampling v) (Grid3D v) -- (DataExpr v)
-               | Volume Colour (DataExpr v)
-               | Slice  Colour (DataExpr v)
-               | Hedgehog Colour (DataExpr v) (DataExpr v) (DataExpr v)
-               | Scatter (DataExpr v) (DataExpr v) (DataExpr v)
-               | Draw [Picture v]
-               | Anim [Picture v]
+data Picture v = Contour Colour (Sampling v) 
+               | ASurface Colour (Sampling v) 
+               | Surface Colour (Sampling v) 
+               | Volume Colour
+               | Slice  Colour
+            --   Following take 3 data expressions, need to confirm how to convert
+            -- | Hedgehog Colour (DataExpr v) (DataExpr v) (DataExpr v)
+            -- | Scatter (DataExpr v) (DataExpr v) (DataExpr v)
+            --   Compound expressions also disabled for now
+            -- | Draw [Picture v]
+            -- | Anim [Picture v]
+
+-- View datatype combines a source with a picture description to make a generic
+-- picture type that is independent of the source
+data View v = Source :> (Picture v)
 
 
 -- Implementing the DSL --------------------------------------
 --
 -- Calculate the astro files required to generate a given picture.
 
-file_list :: Real v => Picture v -> [(String, IO (Grid sh v))]
-file_list (Contour _ _ d)    = expr_list d
-file_list (Surface _ _ d)    = expr_list d
-file_list (Volume _ d)       = expr_list d
-file_list (Slice _ d)        = expr_list d
-file_list (Scatter d1 d2 d3) = concatMap expr_list [d1, d2, d3]
-file_list (Draw ps)          = concatMap file_list ps
-file_list (Anim ps)          = concatMap file_list ps
+file_list :: Real v => View v -> [IO (FizzData sh v)]
+-- file_list (Contour _ _ d)    = expr_list d
+file_list (source :> _) = [readData source]
+-- file_list (Volume _ d)       = expr_list d
+-- file_list (Slice _ d)        = expr_list d
+-- file_list (Scatter d1 d2 d3) = concatMap expr_list [d1, d2, d3]
+-- file_list (Draw ps)          = concatMap file_list ps
+-- file_list (Anim ps)          = concatMap file_list ps
 
-expr_list :: DataExpr v -> [(String, IO (Grid sh v))]
-expr_list (Use d)      = [(resource d, read_data d)]
+--expr_list :: DataExpr v -> [(String, IO (Grid sh v))]
+--expr_list (Use d)      = [(resource d, read_data d)]
 --expr_list (Derive _ e) = expr_list e
 --expr_list (Select _ e) = expr_list e
 
@@ -212,8 +148,8 @@ transfer (X11 names) alpha minv maxv
 -- be visualized.
 
 
-eval_data :: Eq v => Context -> DataExpr v -> Grid3D v
-eval_data env (Use ds)      = lookup env (show ds)
+--eval_data :: (Eq v) => Context -> Source d -> FizzData3D v
+--eval_data env d      = lookup env (show $ readData d)
 
 {-
 eval_data env (Derive f de) = ds { values = (map f) . values $ ds 
@@ -260,10 +196,41 @@ isosurf :: (Cell (ICell sh) a, Applicative (IVert sh), InvInterp a, IsoCells sh,
 isosurf = Algorithms.iso           
 -}
 
-{-# SPECIALISE eval_picture :: Picture Double -> HsScene
- #-}
-eval_picture :: (Enum a, Interp a, InvInterp a) => Context -> Picture a -> HsScene
+evalPicture :: (Enum a, Interp a, InvInterp a, Dataset Source) => View a -> HsScene
+evalPicture (source :> (Surface pal levels)) = 
+  Group static geomlist
+  where
+    field = readData source
+    mkGrid :: [a] -> Stream Cell_8 MyVertex a
+    mkGrid = cubicGrid (shape field)   
+    points = mkGrid $ cubicPoints field
+    vcells = mkGrid $ Dataset.stream field
+    t_vals = fmap toFloat $ samplingToList levels
+    colour = transfer pal 1.0 1.0 (toFloat.length $ t_vals)
+    contours = map (\t -> concat $ Algorithms.isosurface t vcells points) $ t_vals
+    geomlist = zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
 
+--evalPicture (source :> (Draw ps)) =
+-- Group static $ map evalPicture ps
+
+{- Reason: Old picture DSL evaluator, replaced with evalPicture
+eval_picture :: (Enum a, Interp a, InvInterp a) => Context -> Picture a -> HsScene
+                
+eval_picture env (Surface pal levels field)
+    = Group static geomlist
+      where
+          (Use ads) = eval_data env field
+          field = read_astro_data ads
+          points = mkgrid $ cubicPoints field       -- :: Stream Cell_8 MyVertex Vertex3
+          vcells = mkgrid $ extract $ values field  -- :: Stream Cell_8 MyVertex Float
+          t_vals = fmap toFloat $ range_to_list levels             -- :: Num a ??
+          colour = transfer pal 1.0 1.0 (toFloat.length $ t_vals)
+          contours = map (\t -> concat $ Algorithms.isosurface t vcells points) $ t_vals
+          geomlist = zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
+
+eval_picture (Draw ps)
+    = Group static $ map eval_picture ps
+-}
 {-
 eval_picture env (Volume pal de)
     = volume_geom dim points colours
@@ -349,24 +316,6 @@ eval_picture (ASurface pal levels field)
           contours = map (\t -> Algorithms.isosurface t (toList $ values field) {- (values field) -}) $ t_vals
           geomlist = zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
 -}
-                
-eval_picture env (Surface pal levels field)
-    = Group static geomlist
-      where
-          (Use ads) = eval_data env field
-          field = read_astro_data ads
-          mkgrid :: [a] -> Stream Cell_8 MyVertex a
-          mkgrid = cubicGrid (shape field)          -- :: [a] -> Stream Cell_8 MyVertex a
-          points = mkgrid $ cubicPoints field       -- :: Stream Cell_8 MyVertex Vertex3
-          vcells = mkgrid $ extract $ values field  -- :: Stream Cell_8 MyVertex Float
-          t_vals = fmap toFloat $ range_to_list levels             -- :: Num a ??
-          colour = transfer pal 1.0 1.0 (toFloat.length $ t_vals)
-          contours = map (\t -> concat $ Algorithms.isosurface t vcells points) $ t_vals
-          geomlist = zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
-          
-          --showit :: [a] -> IO()
-          --showit x = putStrLn (show $ length x)
-
 {-
 eval_picture (AContour pal levels field)
     = Group static [geomlist]
@@ -433,9 +382,6 @@ eval_picture env (Scatter ds1 ds2 ds3)
                              scale :: InvInterp a => a -> a-> a -> Float
                              scale l h v = interp (inv_interp v l h) 0 248
 -}
-
-eval_picture (Draw ps)
-    = Group static $ map eval_picture ps
 {-
 eval_picture (Anim ps)
     = Animate anim_control (HsMovie True (map eval_picture ps) [])

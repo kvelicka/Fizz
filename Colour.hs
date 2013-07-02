@@ -165,3 +165,41 @@ brewer color alpha
 to_Color4 :: GL.GLfloat -> (Int, Int, Int) -> GL.Color4 GL.GLfloat
 to_Color4 alpha (r,g,b) = GL.Color4 (toFloat r/255.0) (toFloat g/255.0) (toFloat b/255.0) alpha
 
+-- Colours for the picture DSL ----------------------------------------
+--
+-- We are typically interested in palettes of multiple colours,
+-- and provide various methods for constructing these.  For
+-- cases where we only want one colour, we also provide an
+-- easy way of generating the appropriate (singleton) palette.
+--
+-- A colour scheme is either a brewer palette, the 
+-- procedural colour generator from Vis5D, or a single
+-- X11 colour specified by a (standard) name.
+
+data Colour = Brewer Palette | Vis5D | X11 [ColourName] deriving Show
+
+-- For ease of specification, we define some simple "smart
+-- constructors" for building colour schemes, applying the
+-- suitable wrapper.  Note that the constructor function is 
+-- simply the lower case version of the data constructor.
+
+reds, blues, greens, greys :: Colour
+mreds   = Brewer MReds
+mblues  = Brewer MBlues
+mgreens = Brewer MGreens
+reds    = Brewer Reds
+blues   = Brewer Blues
+greens  = Brewer Greens
+greys   = Brewer Greys
+yellows = Brewer Yellows
+
+vis5D :: Colour
+vis5D  = Vis5D
+
+blue, red, green, orange, white, yellow :: Colour
+blue    = X11 [Blue]
+red     = X11 [Red]
+green   = X11 [Green]
+orange  = X11 [Orange]
+white   = X11 [White]
+yellow  = X11 [Yellow]

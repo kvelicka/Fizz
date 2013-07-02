@@ -1,29 +1,33 @@
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances, TypeOperators, EmptyDataDecls #-}
+{-# LANGUAGE ExistentialQuantification, FunctionalDependencies, FlexibleInstances, TypeOperators, EmptyDataDecls #-}
 
 module Dataset where
 
 import qualified Data.ByteString as BS
 
-class Dataset d t where
-  resource :: d -> String
-  read_data :: d -> IO (Grid DIM3 t)
 
--- Datatypes to define dimensions
+-- Generic dataset class. Used to convert specific data types into internal
+-- FizzData representation.
+class Dataset d where
+  readData :: d -> IO (FizzData3D a)
+
+data Source = forall d. Dataset d => Source d
+
+-- Datatypes to define dimensions of FizzData
 data Z = Z
 data a :. b = a :. b
 
 class Dim d where
   size :: d -> Int
   dims :: d -> [Int]
-  
+
 instance Dim Z where
   size = const 0
   dims = const []
-  
+
 instance Dim a => Dim (a :. Int) where
   size (a :. b) = size a * b
   dims (a :. b) = dims a ++ [b]
-  
+
 type DIM0 = Z
 type DIM1 = DIM0 :. Int
 type DIM2 = DIM1 :. Int
@@ -31,10 +35,10 @@ type DIM3 = DIM2 :. Int
 
 dim_x, dim_y, dim_z :: Dim d => d -> Int
 dim_x d = let [_,_,x] = dims d in x
-dim_y d = let [_,y,_] = dims d in y 
+dim_y d = let [_,y,_] = dims d in y
 dim_z d = let [z,_,_] = dims d in z
 
--- Sampling datatype, that may be used to downsample datasets or take slices
+-- Sampling datatype - used to downsample datasets.
 data Sampling a = Single  a
                 | Range   a a
                 | Sampled a a a
@@ -46,39 +50,32 @@ instance (Show a, Num a) => Show (Sampling a) where
   show (Sampled i j k) = show i ++"-"++show (i+j)++"-"++show k
 
 
-range_to_list :: (Num a, Enum a) => Sampling a -> [a]
-range_to_list (Single i)      = [i]
-range_to_list (Range f t)     = [f..t]
-range_to_list (Sampled f s t) = [f,s+f .. t]
+samplingToList :: (Num a, Enum a) => Sampling a -> [a]
+samplingToList (Single i)      = [i]
+samplingToList (Range f t)     = [f..t]
+samplingToList (Sampled f s t) = [f,s+f .. t]
 
-range_size :: Integral a => Sampling a -> a
-range_size (Single _)      = 1
-range_size (Range f t)     = t - f + 1
-range_size (Sampled f s t) = ((t - f) `div` s) + 1
+samplingSize :: (Integral a) => Sampling a -> a
+samplingSize (Single _)      = 1
+samplingSize (Range f t)     = t - f + 1
+samplingSize (Sampled f s t) = ((t - f) `div` s) + 1
 
-
--- Container for sampling and values
-data Values = Values { dimensions :: (Sampling Int, Sampling Int, Sampling Int)
-                     , datastream :: BS.ByteString
-                     , extract    :: [Float]
-                     } deriving Show
-
+{- REASON: Not used in the current data represeantation
 -- Datatype to bound the magnitude of values in the dataset
-data MinMaxValues a = Unknown 
-                    | Bounded a a 
+data MinMaxValues a = Unknown
+                    | Bounded a a
                     | Exact a a
                       deriving Show
+-}
 
--- A generic grid to accomodate various datasets
-data Grid sh v = Grid { origin  :: String
-                      , field   :: String
-                      , shape   :: sh
-                      , time    :: Int
-                      , min_max :: MinMaxValues v
-                      , values  :: Values
-                      } deriving Show
+-- A datatype that is used intenrally to convert datasets to pictures.
+data FizzData sh v = FizzData { origin     :: String
+                              , shape      :: sh
+                              , raw        :: BS.ByteString
+                              , stream     :: [Float]
+                              } deriving Show
 
-type Grid2D a = Grid DIM2 a
-type Grid3D a = Grid DIM3 a
+type FizzData2D a = FizzData DIM2 a
+type FizzData3D a = FizzData DIM3 a
 
-type Context = [Grid3D Float]
+type Context a = [FizzData3D a]

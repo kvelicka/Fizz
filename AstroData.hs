@@ -49,33 +49,47 @@ instance Show Species where
   show Cz   = "Cz"
   show Mv   = "Mv"
 
+{- Reason: trying to get rid of the datatype and use Views
 type Time = Int
 
 data VisData = From (Sampling Int) (Sampling Int) (Sampling Int) Time Species
                deriving Eq
+-}                                 
+
+type Time = Int
+
+data VisData = VisData { xsampling :: Sampling Int
+                       , ysampling :: Sampling Int
+                       , zsampling :: Sampling Int
+                       , time      :: Int
+                       , field     :: Species
+                       } deriving Eq
 
 instance Show VisData where
-  show (From x y z t s) = concat [ "x", (show x)
-                                 , "y", (show y)
-                                 , "z", (show z)
-                                 , "t", (show t)
-                                 , ".", (show s)
-                                 ]
+  show a = concat [ "x", (show $ xsampling a)
+                  , "y", (show $ ysampling a)
+                  , "z", (show $ zsampling a)
+                  , "t", (show $ time a)
+                  , ".", (show $ field a)
+                  ]
 
-lookup :: Context -> VisData -> Grid3D Float
+instance Dataset VisData where
+  readData = readAstroData
+
+lookup :: (Num a) => Context a -> VisData -> FizzData3D a
 lookup []     vd = error $ "lookup context: Grid "++(show vd)++" not found in context."
 lookup (f:fs) vd 
     | origin f == (show vd)  = f
     | otherwise              = lookup fs vd
 
 astroFull :: Time -> Species -> VisData
-astroFull t s = From (Range 0 599) (Range 0 247) (Range 0 247) t s
+astroFull t s = VisData (Range 0 599) (Range 0 247) (Range 0 247) t s
 
 astroFour :: Time -> Species -> VisData
-astroFour t s = From (Sampled 0 4 599) (Sampled 0 4 247) (Sampled 0 4 247) t s
+astroFour t s = VisData (Sampled 0 4 599) (Sampled 0 4 247) (Sampled 0 4 247) t s
 
 sliceZ :: Int -> VisData -> VisData
-sliceZ z (From x y _ t s) = (From x y (Single z) t s)
+sliceZ z (VisData x y _ t s) = (VisData x y (Single z) t s)
 
 -- Parsers ------------------------------------------------------------------
 species :: Parser Char Species
@@ -126,7 +140,7 @@ slice = do satisfy (=='x'); x <- (parse_range integer)
            satisfy (=='z'); z <- (parse_range integer)
            satisfy (=='t'); t <- integer
            satisfy (=='.'); ss <- species
-           return $ From x y z t ss
+           return $ VisData x y z t ss
 
 parse_range :: Num a => Parser Char a -> Parser Char (Sampling a)
 parse_range p = do i <- p
@@ -147,23 +161,26 @@ integer = do cs <- many1 (satisfy isDigit)
 
 -- Low-level IO and conversion ----------------------------------------------
 
-read_astro_file :: String -> IO (Grid DIM3 Float)
-read_astro_file str
-    = read_astro_data (result . fst . runParser slice $ str)
+readAstroFile :: String -> IO (FizzData DIM3 a)
+readAstroFile str
+    = readAstroData (result . fst . runParser slice $ str)
       where result (Left err) = error err       
             result (Right ok) = ok
 
-read_astro_data :: VisData -> IO (Grid DIM3 Float)
-read_astro_data d@(From xr yr zr t s)
+readAstroData :: VisData -> IO (FizzData DIM3 a)
+readAstroData d
     = do { let basename = show d
          ; let summaryf = basename ++ ".summary"
-         ; let dim = Z :. range_size zr :. range_size yr :. range_size xr
+         ; let dim = Z :. 
+                     (samplingSize $ zsampling d) :.
+                     (samplingSize $ ysampling d) :.
+                     (samplingSize $ zsampling d)
          ; h <- openFile (basename ++ ".dat") ReadMode 
          ; b <- BS.hGetContents h
          ; hs <- openFile summaryf ReadMode
          ; bs <- BS.hGetContents hs
          ; let [minv,maxv] = map sampleToFloat . bytesToSamples $ bs
-         ; return $ Grid basename (show s) dim t (Exact minv maxv) (Values (xr,yr,zr) b $ bytesToFloats b)
+         ; return $ FizzData basename dim b $ bytesToFloats b
          }
   
 bytesToFloats :: BS.ByteString -> [Float]

@@ -17,7 +17,9 @@ import Maths
 isosurface :: (Interp a, InvInterp a, Interp g, Cell c v, Enum v) =>
     a -> Stream c v a -> Stream c v g -> [[g]]
 isosurface th samples geom
-    = zipWith (surf_cell th) (stream samples) (stream geom)
+    = zipWith (surf_cell th) 
+              (CellTypes.stream samples) 
+              (CellTypes.stream geom)
 
 surf_cell :: (Interp a, InvInterp a, Interp g, Cell c v, Enum v) =>
     a -> c a -> c g -> [g]
