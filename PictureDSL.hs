@@ -17,6 +17,7 @@ import Prelude hiding (lookup)
 import qualified Data.ByteString as BS
 import qualified Graphics.Rendering.OpenGL.GL as GL
 import System.IO.Unsafe
+import Debug.Trace (trace)
 
 import Algorithms
 import AstroData
@@ -198,17 +199,18 @@ isosurf = Algorithms.iso
 
 evalPicture :: (Enum a, Interp a, InvInterp a, Dataset d) => View d a -> HsScene
 evalPicture (source :> (Surface pal levels)) = 
-  Group static geomlist
+  unsafePerformIO(putStrLn $ "evalPicture computes." ++ (show $ length geomlist))
+  `seq` Group static geomlist
   where
     field = unsafePerformIO $ readData source
     mkGrid :: [a] -> Stream Cell_8 MyVertex a
     mkGrid = cubicGrid (shape field)   
-    points = mkGrid $ cubicPoints field
-    vcells = mkGrid $ Dataset.stream field
-    t_vals = fmap toFloat $ samplingToList levels
+    points = trace "points" $ mkGrid $ cubicPoints field
+    vcells = trace "vcells" $ mkGrid $ Dataset.stream field
+    t_vals = trace "t_vals" $ fmap toFloat $ samplingToList levels
     colour = transfer pal 1.0 1.0 (toFloat.length $ t_vals)
-    contours = map (\t -> concat $ Algorithms.isosurface t vcells points) $ t_vals
-    geomlist = zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
+    contours = trace "contours" $ map (\t -> concat $ Algorithms.isosurface t vcells points) $ t_vals
+    geomlist = trace "geomlist" $ zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
 
 --evalPicture (source :> (Draw ps)) =
 -- Group static $ map evalPicture ps

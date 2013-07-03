@@ -43,6 +43,8 @@ import Data.List (nubBy)
 
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLUT as GLUT
+import System.IO.Unsafe
+import Debug.Trace (trace)
 
 import AstroData
 import Colour
@@ -80,14 +82,14 @@ exec p = do { GLUT.initialize "Astro Viewer" [] >> return ()
             }
 -}
 
-evalView :: (Enum v, Num v, Interp v, InvInterp v, Dataset d) => View d v -> IO()
+evalView :: (Dataset d) => View d Float -> IO()
 evalView view@(source :> picture)  = 
   do { GLUT.initialize "Astro Viewer" [] >> return ()
      --; let resources = file_list view
      --; context <- resources
      ; g <- openGraphics "Scene Viewer" (1000,800)
      ; addScene g $ [evalPicture view]
-     ; GLUT.mainLoop
+     ; trace "mainLoop" $ GLUT.mainLoop
      }
 
 {-
@@ -126,12 +128,14 @@ ds :: Grid3D Double = Grid "" "" (Z :. 3 :. 5 :. 4) 0 0.0 2.0 ar
 -}
 
 -- main: if compiling, you must come up with a Picture expression here
+view = (from4 35 G) :> (Surface red (Single 2500))
 main :: IO ()
 main = do { {-exec $ Anim [ Surface red (Single 2500) (from4 35 G)
                         , Surface blue (Single 16000) (from4 35 G)
                         , Surface green (Single 20000) (from4 35 G)
                         ]-}
-            evalView $ (from4 35 G) :> (Surface red (Single 2500))
+              --let view = (from4 35 G) :> (Surface red (Single 2500))
+            ; evalView $ view
             --let spec :: Picture Float
             --    spec = Volume reds (from4 60 G)
               --spec = Scatter (from4 60 Mv) (from4 60 D) (from4 60 Hp)

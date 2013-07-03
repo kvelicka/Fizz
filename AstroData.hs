@@ -169,7 +169,8 @@ readAstroFile str
 
 readAstroData :: VisData -> IO (FizzData DIM3 a)
 readAstroData d
-    = do { let basename = show d
+    = do { putStrLn "readAstroData being called"
+         ; let basename = show d
          ; let summaryf = basename ++ ".summary"
          ; let dim = Z :. 
                      (samplingSize $ zsampling d) :.
@@ -177,10 +178,12 @@ readAstroData d
                      (samplingSize $ zsampling d)
          ; h <- openFile (basename ++ ".dat") ReadMode 
          ; b <- BS.hGetContents h
-         ; hs <- openFile summaryf ReadMode
-         ; bs <- BS.hGetContents hs
-         ; let [minv,maxv] = map sampleToFloat . bytesToSamples $ bs
-         ; return $ FizzData basename dim b $ bytesToFloats b
+         --; hs <- openFile summaryf ReadMode
+         --; bs <- BS.hGetContents hs
+         --; let [minv,maxv] = map sampleToFloat . bytesToSamples $ bs
+         ; let vs = bytesToFloats b
+         ; putStrLn $ "readAstroData finished"
+         ; return $ FizzData basename dim b $ vs
          }
   
 bytesToFloats :: BS.ByteString -> [Float]

@@ -41,6 +41,7 @@ import System.IO.Unsafe (unsafePerformIO)
 import Data.IORef  (IORef, readIORef, writeIORef, newIORef, modifyIORef)
 import Data.Maybe
 import Data.List(transpose,sortBy)
+import Debug.Trace (trace)
 
 type HsVertex = Vertex3 GLfloat
 type HsVector = Vector3 GLfloat
@@ -73,7 +74,7 @@ dyn :: (Event -> a -> a) -> HsHandler a; dyn f  = Just f
 -- nice pattern, as they need the ID of the compiled list as
 -- input, and will in general produce an action (e.g. compiling
 -- a new scene into the list) as their output.
-type HsCompiledHandler = Maybe (Event -> DisplayList -> IO())
+type HsCompiledHandler = Maybe (Event -> DisplayList -> IO ())
 
 data HsTransform = Rotate GLfloat HsVector
                  | Scale  GLfloat GLfloat GLfloat
@@ -282,7 +283,7 @@ double = fromRational . toRational
 -- its intended to be used by the callback setup.  It is assumed
 -- that rendering uses the depth and colour buffers - other
 -- combinations could be handled by parameterization.
-display :: IORef HsScene -> IO()
+display :: IORef HsScene -> IO ()
 display root = readIORef root >>= render
 
 {-# NOINLINE vpn #-} 
@@ -296,7 +297,7 @@ moving = unsafePerformIO(return =<< newIORef False)
 
 
 -- Render
-render :: HsScene -> IO()
+render :: HsScene -> IO ()
 render (Camera _ view scene)  = do { clear [DepthBuffer, ColorBuffer]
                                    ; loadIdentity
                                    ; lookAt (eye view) (cop view) (vup view)
@@ -400,15 +401,15 @@ collapse es
 -- Compute the extent of a scene.  Note that for a compiled scene,
 -- we compute and store the extent at the time the scene is compiled.
 extent :: HsScene -> Extent
-extent (Camera _ _ scene) = extent scene
-extent (Geometry _ _ gs)  = collapse $ map g_extent gs
-extent (Transform _ t)    = (vert_max, vert_min)
-extent (Group _ gs)       = collapse $ map extent gs
-extent (Compiled _ ex _)  = ex
-extent (Special act)      = (vert_max, vert_min)
-extent (Imposter st dy)   = collapse [extent st, extent dy]
-extent (Switch sx sy sz)  = collapse $ map extent [sx, sy, sz]
-extent (Animate _ _ (s:_) _)= extent s
+extent (Camera _ _ scene) =   unsafePerformIO(putStrLn "calling extent cam") `seq` extent scene
+extent (Geometry _ _ gs)  =   unsafePerformIO(putStrLn "calling extent geom") `seq` collapse $ map g_extent gs
+extent (Transform _ t)    =   unsafePerformIO(putStrLn "calling extent transform") `seq` (vert_max, vert_min)
+extent (Group _ gs)       =   unsafePerformIO(putStrLn "calling extent group") `seq` collapse $ map extent gs
+extent (Compiled _ ex _)  =   unsafePerformIO(putStrLn "calling extent compiled") `seq` ex
+extent (Special act)      =   unsafePerformIO(putStrLn "calling extent special") `seq` (vert_max, vert_min)
+extent (Imposter st dy)   =   unsafePerformIO(putStrLn "calling extent imposter") `seq` collapse [extent st, extent dy]
+extent (Switch sx sy sz)  =   unsafePerformIO(putStrLn "calling extent switch") `seq` collapse $ map extent [sx, sy, sz]
+extent (Animate _ _ (s:_) _)= unsafePerformIO(putStrLn "calling extent animate") `seq` extent s
 
 
 g_extent :: HsGeom -> Extent
@@ -468,10 +469,10 @@ reshape g dim@(Size width height) =
 
 -- Position the camera
 calibrate :: HsScene -> Extent -> HsScene
-calibrate (Camera h view g) bounds'
+calibrate (Camera h view g) bounds''
   = Camera h view' g
     where
-        -- bounds' = extent g
+        bounds' = extent g
         (Vertex3 xl yl zl, Vertex3 xu yu zu) = bounds'
         xdif = xu - xl
         ydif = yu - yl
@@ -488,7 +489,7 @@ calibrate (Camera h view g) bounds'
                   then let (Vector3 upx upy upz) = cam_up 
                        in (Vector3 (negate upz) upx upy)
                   else cam_up
-        view' = view { cop    = Vertex3 cx cy cz
+        view' = trace "view'" $ view { cop    = Vertex3 cx cy cz
                      , eye    = let Vector3 vx vy vz = cam_vpn
                                 in Vertex3 (cx + d*vx) (negate (cy + d*vy)) (negate (cz + d*vz))
                      , vup    = cam_up
@@ -501,9 +502,9 @@ calibrate (Camera h view g) bounds'
 --addScene :: IORef HsScene -> Extent -> [HsScene] -> IO()
 addScene :: IORef HsScene -> [HsScene] -> IO()
 addScene g hs = 
-  do { modifyIORef g (\(Camera h view (Group g s))
-                     -> calibrate (Camera h view (Group g (s++hs))) $ collapse $ map extent hs
-                     )
+  do { let a = trace "extent is mapped" $ collapse $ map extent hs
+     ; trace "modifyIORef" $ modifyIORef g (\(Camera h view (Group g s))
+                     -> calibrate (Camera h view (Group g (s++hs))) $ a)
      ; postRedisplay Nothing
      }
 
