@@ -75,6 +75,10 @@ data FizzData sh v = FizzData { origin     :: String
                               , stream     :: [Float]
                               } deriving Show
 
+dimensions :: Dim sh => FizzData sh v -> (Int, Int, Int)
+dimensions d = let [dx,dy,dz] = dims . shape $ d in (dx, dy, dz)
+
+
 type FizzData2D a = FizzData DIM2 a
 type FizzData3D a = FizzData DIM3 a
 

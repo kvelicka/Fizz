@@ -41,10 +41,10 @@ module Main where
 
 import Data.List (nubBy)
 
+import Debug.Trace (trace)
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLUT as GLUT
 import System.IO.Unsafe
-import Debug.Trace (trace)
 
 import AstroData
 import Colour
@@ -88,8 +88,9 @@ evalView view@(source :> picture)  =
      --; let resources = file_list view
      --; context <- resources
      ; g <- openGraphics "Scene Viewer" (1000,800)
-     ; addScene g $ [evalPicture view]
-     ; trace "mainLoop" $ GLUT.mainLoop
+    -- ; addScene g $ [evalPicture view]
+     ; addScene g $ [Imposter (Group static [axes 600.0 248.0 248.0, evalPicture view]) (bbox 600 248 248) ]
+     ; GLUT.mainLoop
      }
 
 {-
@@ -129,6 +130,7 @@ ds :: Grid3D Double = Grid "" "" (Z :. 3 :. 5 :. 4) 0 0.0 2.0 ar
 
 -- main: if compiling, you must come up with a Picture expression here
 view = (from4 35 G) :> (Surface red (Single 2500))
+view2 = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 D) :> (Slice reds)
 main :: IO ()
 main = do { {-exec $ Anim [ Surface red (Single 2500) (from4 35 G)
                         , Surface blue (Single 16000) (from4 35 G)

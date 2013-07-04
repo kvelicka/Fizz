@@ -13,11 +13,11 @@ module PictureDSL where
 --import Graphics.Rendering.OpenGL.GL.BasicTypes
 --import Graphics.Rendering.OpenGL.GL.VertexSpec
 import Control.Applicative
+import Debug.Trace (trace)
 import Prelude hiding (lookup)
 import qualified Data.ByteString as BS
 import qualified Graphics.Rendering.OpenGL.GL as GL
 import System.IO.Unsafe
-import Debug.Trace (trace)
 
 import Algorithms
 import AstroData
@@ -58,12 +58,12 @@ from4 t s = astroFour t s
 --   < - back one frame
 --   > - forward one frame
 
-data Picture v = Contour Colour (Sampling v) 
-               | ASurface Colour (Sampling v) 
-               | Surface Colour (Sampling v) 
-               | Volume Colour
+data Picture v =  Surface Colour (Sampling v) 
                | Slice  Colour
-            --   Following take 3 data expressions, need to confirm how to convert
+            -- | Volume Colour
+            -- | Contour Colour (Sampling v) 
+            -- | ASurface Colour (Sampling v) 
+            --  Following take 3 data expressions, need to confirm how to convert
             -- | Hedgehog Colour (DataExpr v) (DataExpr v) (DataExpr v)
             -- | Scatter (DataExpr v) (DataExpr v) (DataExpr v)
             --   Compound expressions also disabled for now
@@ -199,8 +199,7 @@ isosurf = Algorithms.iso
 
 evalPicture :: (Enum a, Interp a, InvInterp a, Dataset d) => View d a -> HsScene
 evalPicture (source :> (Surface pal levels)) = 
-  unsafePerformIO(putStrLn $ "evalPicture computes." ++ (show $ length geomlist))
-  `seq` Group static geomlist
+  Group static geomlist
   where
     field = unsafePerformIO $ readData source
     mkGrid :: [a] -> Stream Cell_8 MyVertex a
@@ -211,6 +210,27 @@ evalPicture (source :> (Surface pal levels)) =
     colour = transfer pal 1.0 1.0 (toFloat.length $ t_vals)
     contours = trace "contours" $ map (\t -> concat $ Algorithms.isosurface t vcells points) $ t_vals
     geomlist = trace "geomlist" $ zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
+
+evalPicture (source :> (Slice pal)) =
+  Group static $ [plane rows]
+  where
+      field  = unsafePerformIO $ readData source
+      (dz,dy,dx)    = dimensions field
+      points = trace (show dx ++ " " ++ show dy ++ " " ++ show dz) $ plane_points dx dy dz
+      colour = transfer pal 1.0 (minimum $ Dataset.stream $ field) (maximum $ Dataset.stream $ field)
+      colours :: [GL.Color4 GL.GLfloat] = map colour (Dataset.stream field)
+      --steps  = case slice_plane (space field) of
+      --           X_equals _ -> dx
+      --           Y_equals _ -> dy
+      --          Z_equals _ -> dz
+      rows   = splitInto dz {- steps -} $ zip points colours
+
+plane_points :: Int -> Int -> Int -> [GL.Vertex3 GL.GLfloat]
+plane_points dx dy dz
+  | dx == 1   =   trace "dx evaluated" $ [GL.Vertex3 0.0 (realToFrac y) (realToFrac z) | y <- [0 .. dy-1], z <- [0..dz-1]]
+  | dy == 1   =   trace "dy evaluated" $ [GL.Vertex3 (realToFrac x) 0.0 (realToFrac z) | x <- [0 .. dy-1], z <- [0..dz-1]]
+  | dz == 1   =   trace "dz evaluated" $ [GL.Vertex3 (realToFrac x) (realToFrac y) 0.0 | x <- [0 .. dy-1], y <- [0..dz-1]]
+
 
 --evalPicture (source :> (Draw ps)) =
 -- Group static $ map evalPicture ps
@@ -243,20 +263,34 @@ eval_picture env (Volume pal de)
           colour = transfer pal 0.4 (minv field) (maxv field)
           colours :: [GL.Color4 GL.GLfloat] = map colour (values field)
 -}
+
+
+
+
+
 {-
-eval_picture env (Slice pal de)
-    = Group static $ [plane rows]
+slice_plane :: Dimension -> Plane
+slice_plane (Dim3D r _ _) | singleton r = X_equals . head . range_to_list $ r
+slice_plane (Dim3D _ r _) | singleton r = Y_equals . head . range_to_list $ r
+slice_plane (Dim3D _ _ r) | singleton r = Z_equals . head . range_to_list $ r
+slice_plane _                           = error "slice_plane: no singleton dimension"
+
+singleton :: Ord a => Sampling a -> Bool 
+singleton (Single _)      = True
+singleton (Range f t)     = f == t
+singleton (Sampled f s t) = f == t || f == s || s > t
+
+plane_points :: Dimension -> [GL.Vertex3 GL.GLfloat]
+plane_points dim
+    = case slice_plane dim of
+        X_equals v -> [coord v cy cz | cz <- rng_z, cy <- rng_y]
+        Y_equals v -> [coord cx v cz | cz <- rng_z, cx <- rng_x]
+        Z_equals v -> [coord cx cy v | cy <- rng_y, cx <- rng_x]
       where
-          field  = eval_data env de
-          dim    = dimensions field
-          points = plane_points (space field)
-          colour = transfer pal 1.0 (minv field) (maxv field)
-          colours :: [GL.Color4 GL.GLfloat] = map colour (values field)
-          steps  = case slice_plane (space field) of
-                     X_equals _ -> dim_y field
-                     Y_equals _ -> dim_x field
-                     Z_equals _ -> dim_x field
-          rows   = splitInto steps $ zip points colours
+        rng_z = range_to_list . dim3d_z $ dim
+        rng_y = range_to_list . dim3d_y $ dim
+        rng_x = range_to_list . dim3d_x $ dim
+        coord x y z = GL.Vertex3 (toFloat x) (toFloat y) (toFloat z)
 -}
 {-
 eval_picture env (Hedgehog pal deu dev dew)
@@ -269,6 +303,7 @@ eval_picture env (Hedgehog pal deu dev dew)
           points = cubicPoints fieldu
           geom   = zipWith4 hogs points (values fieldu) (values fieldv) (values fieldw)
 -}
+
 
 -- hedgehog (first derivative, across the cell)
 {-

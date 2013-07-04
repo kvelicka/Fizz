@@ -12,10 +12,11 @@ import Data.Char
 import Data.Maybe
 import Data.Ratio
 import Data.Word
+import Debug.Trace (trace)
 import GHC.Int
 import Numeric
-import qualified Data.ByteString as BS
 import Prelude hiding (lookup)
+import qualified Data.ByteString as BS
 import System.IO
 import System.IO.Unsafe (unsafePerformIO)
 import System.Posix.Files
@@ -169,11 +170,10 @@ readAstroFile str
 
 readAstroData :: VisData -> IO (FizzData DIM3 a)
 readAstroData d
-    = do { putStrLn "readAstroData being called"
-         ; let basename = show d
+    = do { let basename = show d
          ; let summaryf = basename ++ ".summary"
          ; let dim = Z :. 
-                     (samplingSize $ zsampling d) :.
+                     (samplingSize $ xsampling d) :.
                      (samplingSize $ ysampling d) :.
                      (samplingSize $ zsampling d)
          ; h <- openFile (basename ++ ".dat") ReadMode 
@@ -182,8 +182,7 @@ readAstroData d
          --; bs <- BS.hGetContents hs
          --; let [minv,maxv] = map sampleToFloat . bytesToSamples $ bs
          ; let vs = bytesToFloats b
-         ; putStrLn $ "readAstroData finished"
-         ; return $ FizzData basename dim b $ vs
+         ; trace "AstroData read" $ return $ FizzData basename dim b $ vs
          }
   
 bytesToFloats :: BS.ByteString -> [Float]
@@ -193,6 +192,8 @@ bytesToFloats bs
                        where
                            (pre,post) = BS.splitAt 4 bs
                            [a,b,c,d]  = BS.unpack pre
+                           -- Reverse version
+                        -- [d,c,b,a]  = BS.unpack pre
                            s = (a32 .|. b32 .|. c32 .|. d32)
                            a32 :: Word32 = fromIntegral a `shiftL` 24
                            b32 :: Word32 = fromIntegral b `shiftL` 16
