@@ -46,7 +46,7 @@ instance  (Ix a) => Ix (Cell_8 a)  where
                    index (l5,u5) i5 + rangeSize (l5,u5) * (
                     index (l6,u6) i6 + rangeSize (l6,u6) * (
                      index (l7,u7) i7 + rangeSize (l7,u7) * (
-                      index (l8,u8) i8))))))) in trace ("index " ++ show a) $ a
+                      index (l8,u8) i8))))))) in a
 
     inRange ((Cell_8 l1 l2 l3 l4 l5 l6 l7 l8),(Cell_8 u1 u2 u3 u4 u5 u6 u7 u8))
             (Cell_8 i1 i2 i3 i4 i5 i6 i7 i8) =
@@ -207,7 +207,7 @@ instance Cell Cell_4 MyVertex where
 -- to the number of CELLS along each dimension.
 cubicGeom :: (Floating a) => FizzData DIM3 v -> Stream Cell_8 MyVertex (Vertex3 a)
 cubicGeom f 
-    = cubicGrid (shape f) $ (cubicPoints f)
+    = cubicGrid (dimensions f) $ (cubicPoints f)
 
 -- Generate a list of coordinates for a (xsz x ysz x zsz)-cube, starting
 -- from (0,0,0).
@@ -245,7 +245,29 @@ cubicGrid (Z :. zmax :. ymax :. xmax)
               | i==(xmax-1)   =    discontinuities (0,j+1,k) xs
               | otherwise     = x: discontinuities (i+1,j,k) xs
 -}
+cubicGrid :: (Int,Int,Int) -> [a] -> Stream Cell_8 MyVertex a
+cubicGrid (xmax,ymax,zmax) 
+    = Stream . (discontinuities (0,0,0)) . zipCube
+      where
+          zipCube stream = zipWith8 Cell_8 stream
+                                           (drop 1 stream)
+                                           (drop (line+1) stream)
+                                           (drop line stream)
+                                           (drop plane stream)
+                                           (drop (plane+1) stream)
+                                           (drop (plane+line+1) stream)
+                                           (drop (plane+line) stream)
+          line  = xmax+1
+          plane = (xmax+1)*(ymax+1)
 
+          discontinuities _ [] = []
+          discontinuities (i,j,k) (x:xs)
+              | k==zmax   = []
+              | j==ymax   =    discontinuities (0,0,k+1) (drop xmax xs)
+              | i==xmax   =    discontinuities (0,j+1,k) xs
+              | otherwise = x: discontinuities (i+1,j,k) xs
+
+{- "Current" implementation
 cubicGrid :: DIM3 -> [a] -> Stream Cell_8 MyVertex a
 cubicGrid (Z :. zmax :. ymax :. xmax) 
     = Stream . (discontinuities (0,0,0)) . zipCube
@@ -267,6 +289,7 @@ cubicGrid (Z :. zmax :. ymax :. xmax)
               | j==ymax   =    discontinuities (0,0,k+1) (drop xmax xs)
               | i==xmax   =    discontinuities (0,j+1,k) xs
               | otherwise = x: discontinuities (i+1,j,k) xs
+-}              
 
 squareGrid :: DIM2 -> [a] -> Stream Cell_4 MyVertex a
 squareGrid (Z :. ymax :. xmax) 

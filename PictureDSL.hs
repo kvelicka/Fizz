@@ -203,7 +203,7 @@ evalPicture (source :> (Surface pal levels)) =
   where
     field = unsafePerformIO $ readData source
     mkGrid :: [a] -> Stream Cell_8 MyVertex a
-    mkGrid = cubicGrid (shape field)   
+    mkGrid = cubicGrid (dimensions field)   
     points = trace "points" $ mkGrid $ cubicPoints field
     vcells = trace "vcells" $ mkGrid $ Dataset.stream field
     t_vals = trace "t_vals" $ fmap toFloat $ samplingToList levels
@@ -212,10 +212,14 @@ evalPicture (source :> (Surface pal levels)) =
     geomlist = trace "geomlist" $ zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
 
 evalPicture (source :> (Slice pal)) =
+  unsafePerformIO(--(putStrLn $ "steps :" ++ (show dx) ++ " nr vals " ++ (show . length $ Dataset.stream $ field)) >>
+  (mapM_ (putStrLn . show) (Dataset.stream $ field)) >> 
+  (putStrLn "DONE.")) `seq`
+  --(putStrLn $ show (minimum $ Dataset.stream $ field) ++ " - " ++ show (maximum $ Dataset.stream $ field))) `seq` 
   Group static $ [plane rows]
   where
       field  = unsafePerformIO $ readData source
-      (dz,dy,dx)    = dimensions field
+      (dx,dy,dz)    = dimensions field
       points = trace (show dx ++ " " ++ show dy ++ " " ++ show dz) $ plane_points dx dy dz
       colour = transfer pal 1.0 (minimum $ Dataset.stream $ field) (maximum $ Dataset.stream $ field)
       colours :: [GL.Color4 GL.GLfloat] = map colour (Dataset.stream field)
@@ -223,13 +227,14 @@ evalPicture (source :> (Slice pal)) =
       --           X_equals _ -> dx
       --           Y_equals _ -> dy
       --          Z_equals _ -> dz
-      rows   = splitInto dz {- steps -} $ zip points colours
+      rows   = splitInto dx {- steps -} $ zip points colours
 
 plane_points :: Int -> Int -> Int -> [GL.Vertex3 GL.GLfloat]
 plane_points dx dy dz
-  | dx == 1   =   trace "dx evaluated" $ [GL.Vertex3 0.0 (realToFrac y) (realToFrac z) | y <- [0 .. dy-1], z <- [0..dz-1]]
+  | dx == 1   =   trace "dx evaluated" $ [GL.Vertex3 0.0 (realToFrac y) (realToFrac z) | y <- [0..dy-1], z <- [0..dz-1]]
   | dy == 1   =   trace "dy evaluated" $ [GL.Vertex3 (realToFrac x) 0.0 (realToFrac z) | x <- [0 .. dy-1], z <- [0..dz-1]]
-  | dz == 1   =   trace "dz evaluated" $ [GL.Vertex3 (realToFrac x) (realToFrac y) 0.0 | x <- [0 .. dy-1], y <- [0..dz-1]]
+  -- | dz == 1   =   trace "dz evaluated" $ [GL.Vertex3 (realToFrac x) (realToFrac y) 0.0 | x <- [0 .. dx-1], y <- [0..dy-1]]
+  | dz == 1   =   trace "dz evaluated" $ [GL.Vertex3 (realToFrac x) (realToFrac y) 124.0 | y <- [0 .. dy-1], x <- [0..dx-1]]
 
 
 --evalPicture (source :> (Draw ps)) =

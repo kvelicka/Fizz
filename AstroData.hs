@@ -171,7 +171,7 @@ readAstroFile str
 readAstroData :: VisData -> IO (FizzData DIM3 a)
 readAstroData d
     = do { let basename = show d
-         ; let summaryf = basename ++ ".summary"
+         --; let summaryf = basename ++ ".summary"
          ; let dim = Z :. 
                      (samplingSize $ xsampling d) :.
                      (samplingSize $ ysampling d) :.
