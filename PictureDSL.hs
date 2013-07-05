@@ -213,16 +213,17 @@ evalPicture (source :> (Surface pal levels)) =
 
 evalPicture (source :> (Slice pal)) =
   unsafePerformIO(--(putStrLn $ "steps :" ++ (show dx) ++ " nr vals " ++ (show . length $ Dataset.stream $ field)) >>
-  (mapM_ (putStrLn . show) (points)) >> 
+  (mapM_ (putStrLn . show) (head rows)) >> 
   (putStrLn "DONE.")) `seq`
   --(putStrLn $ show (minimum $ Dataset.stream $ field) ++ " - " ++ show (maximum $ Dataset.stream $ field))) `seq` 
   Group static $ [plane rows]
   where
       field  = unsafePerformIO $ readData source
+      values = Dataset.stream field
       (dx,dy,dz)    = dimensions field
       points = trace (show dx ++ " " ++ show dy ++ " " ++ show dz) $ plane_points dx dy dz
-      colour = transfer pal 1.0 (minimum $ Dataset.stream $ field) (maximum $ Dataset.stream $ field)
-      colours :: [GL.Color4 GL.GLfloat] = map colour (Dataset.stream field)
+      colour = transfer pal 1.0 (minimum $ values) (maximum $ values)
+      colours :: [GL.Color4 GL.GLfloat] = map colour values
       --steps  = case slice_plane (space field) of
       --           X_equals _ -> dx
       --           Y_equals _ -> dy
