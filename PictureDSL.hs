@@ -231,10 +231,9 @@ evalPicture (source :> (Slice pal)) =
 
 plane_points :: Int -> Int -> Int -> [GL.Vertex3 GL.GLfloat]
 plane_points dx dy dz
-  | dx == 1   =   trace "dx evaluated" $ [GL.Vertex3 0.0 (realToFrac y) (realToFrac z) | y <- [0..dy-1], z <- [0..dz-1]]
-  | dy == 1   =   trace "dy evaluated" $ [GL.Vertex3 (realToFrac x) 0.0 (realToFrac z) | x <- [0 .. dy-1], z <- [0..dz-1]]
-  -- | dz == 1   =   trace "dz evaluated" $ [GL.Vertex3 (realToFrac x) (realToFrac y) 0.0 | x <- [0 .. dx-1], y <- [0..dy-1]]
-  | dz == 1   =   trace "dz evaluated" $ [GL.Vertex3 (realToFrac x) (realToFrac y) 124.0 | y <- [0 .. dy-1], x <- [0..dx-1]]
+  | dx == 1   =   trace "dx evaluated" $ [GL.Vertex3 0.0 (realToFrac y) (realToFrac z) | y <- [0 .. dy-1], z <- [0..dz-1]]
+  | dy == 1   =   trace "dy evaluated" $ [GL.Vertex3 (realToFrac x) 0.0 (realToFrac z) | x <- [0 .. dx-1], z <- [0..dz-1]]
+  | dz == 1   =   trace "dz evaluated" $ [GL.Vertex3 (realToFrac x) (realToFrac y) 0.0 | y <- [0 .. dy-1], x <- [0..dx-1]]
 
 
 --evalPicture (source :> (Draw ps)) =
