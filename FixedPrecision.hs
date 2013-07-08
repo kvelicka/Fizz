@@ -64,14 +64,6 @@ instance Fractional FixedPrecision where
     recip (FP m e)   = normaliseFP $ FP (10000000`quot`m) (-e-7)
     fromRational rat = error "not implemented: fromRational on FixedPrecision"
 
-{-
-
-sqroot :: FixedPrecision -> FixedPrecision
-sqroot (FP m e) | odd e  = sqroot (FP (m*10) (e-1))
-                | even e = normaliseFP $
-                           FP (round ((sqrt (fromIntegral (10000*m)) / 100)))
-                              (e`quot`2)
--}
 
 sqroot :: FixedPrecision -> FixedPrecision
 sqroot (FP 0 0) = FP 0 0
