@@ -218,15 +218,13 @@ isosurf = Algorithms.iso
 
 evalPicture :: (Enum a, Interp a, InvInterp a, Dataset d) => View d a -> HsScene
 evalPicture (source :> (Surface pal levels)) = 
-  --unsafePerformIO(mapM_ (putStrLn.show) $ CellTypes.stream $ points) `seq`
+  unsafePerformIO(mapM_ (putStrLn.show) $ CellTypes.stream $ points) `seq`
   Group static geomlist
   where
     field = unsafePerformIO $ readData source
     (dx,dy,dz) = dimensions field
-    
     mkGrid :: [a] -> Stream Cell_8 MyVertex a
     mkGrid = cubicGrid (dx,dy,dz)
-    
     points   = mkGrid $ cubicPoints field
     vcells   = mkGrid $ Dataset.stream field
     t_vals   = fmap toFloat $ samplingToList levels
