@@ -66,122 +66,27 @@ import Render
 
 -- run this using GHCi
 
-{- Reason: Old execution function, replaced with evalView
-exec :: (Enum v, Interp v, InvInterp v) => Picture v -> IO()
-exec p = do { GLUT.initialize "Astro Viewer" [] >> return ()
-            ; let resources = file_list p -- nubBy (\a b -> (fst a) == (fst b)) $ file_list p
-            ; context <- mapM snd resources
-            ; g <- openGraphics "Scene Viewer" (1000,800)
-            --;  addScene g [Geometry Nothing GL.Triangles $ [HsGeom_cv (GL.Color3 1.0 0.0 0.0 :: GL.Color3 GL.GLfloat) $
-            --                        [GL.Vertex3 0.0 0.0 0.0, GL.Vertex3 2.0 0.0 0.0, GL.Vertex3 1.0 2.0 0.0]]]
-            ; addScene g $ [eval_picture context p]
-
-{-            ; addScene g $ [Imposter (Group static [axes 600.0 248.0 248.0, eval_picture context p]) 
-                                     (bbox 600 248 248) ] -}
-            ; GLUT.mainLoop
-            }
--}
-
 evalView :: (Dataset d) => View d Float -> IO()
 evalView view@(source :> picture)  = 
   do { GLUT.initialize "Astro Viewer" [] >> return ()
-     --; let resources = file_list view
-     --; context <- resources
      ; g <- openGraphics "Scene Viewer" (1000,800)
-    -- ; addScene g $ [evalPicture view]
      ; addScene g $ [Imposter (Group static [axes 600.0 248.0 248.0, evalPicture view]) (bbox 600 248 248) ]
      ; GLUT.mainLoop
      }
 
-{-
-ar :: Array DIM2 Double 
-ar  = fromList (Z :. 5 :. 4) $
-                      [ 0,0,0,0, 
-                        0,1,0,0,
-                        0,0,1,0,
-                        0,1,1,0,
-                        0,0,0,0 
-                      ]
-ds :: Grid2D Double 
-ds  = Grid "" "" (Z :. 5 :. 4) 0 0.0 1.0 ar 
--}
-{-
-ar :: Array Double = fromList $ -- (Z :. 3 :. 5 :. 4) $
-                      [ 0,0,0,0, 
-                        0,0,0,0,
-                        0,0,0,0,
-                        0,0,0,0,
-                        0,0,0,0,
-
-                        0,0,0,0,
-                        0,2,2,0,
-                        0,2,2,0,
-                        0,2,2,0,
-                        0,0,0,0, 
-
-                        0,0,0,0, 
-                        0,0,0,0,
-                        0,0,0,0,
-                        0,0,0,0,
-                        0,0,0,0
-                      ]
-ds :: Grid3D Double = Grid "" "" (Z :. 3 :. 5 :. 4) 0 0.0 2.0 ar 
--}
 
 -- main: if compiling, you must come up with a Picture expression here
-view = (from4 35 G) :> (Surface red (Single 2500))
-view2 = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 D) :> (Slice reds)
+
 main :: IO ()
-main = do { {-exec $ Anim [ Surface red (Single 2500) (from4 35 G)
-                        , Surface blue (Single 16000) (from4 35 G)
-                        , Surface green (Single 20000) (from4 35 G)
-                        ]-}
-              --let view = (from4 35 G) :> (Surface red (Single 2500))
-            ; evalView $ view
-            --let spec :: Picture Float
-            --    spec = Volume reds (from4 60 G)
-              --spec = Scatter (from4 60 Mv) (from4 60 D) (from4 60 Hp)
-              --spec = Draw [ Contour reds (Sampled 2000 1000 20000)
-              --                           (Select (Z_equals z) (from4 60 G))
-              --            | z <- [0,8..247] ]
-  
-  
---          ; ds :: Grid3D Float <- read_astro_data (from4 60 G) --(from4 60 G) 
---          ; let minamx = min_max ds
-  
-  
-          --; putStrLn $ "Got grid, indexing ..."      
-          --; putStrLn $ "Got array sum " ++ (show $ sumAll (values ds))
-          -- :: (Enum a, InvInterp a, Elt a) => Picture a 
-          --; let v0 = values ds !: ((Z :. 247 :. 247 :. 599) :: DIM3)
-          --; putStrLn $ "Got " ++ (show v0)  
- --         ; let pic = Surface red  (Single 16000) ds
-          --; let pic = Draw [ Surface blue (Single {-(dminv + (dmaxv - dminv)/2.0)-} 20000) ds
-          --                 , Surface red  (Single 16000) ds
-          --                 ]  
-          --; let pic = Contour blue (Single {-(dminv + (dmaxv - dminv)/2.0)-} 1.0 {-20000-}) ds
---          ; exec pic
-          -- ; exec $ Volume Vis5D (from4 60 G)  -- newFingers -- turbulence_anim -- spec
-          -- ; exec $ Surface red (Single 2500) (from4 60 G)  -- newFingers -- turbulence_anim -- spec
-          }
-{-
-main = do { GLUT.initialize "Astro Viewer" [] >> return ()
-          ; g <- openGraphics "Scene Viewer" (1000,800)
-          ; addScene g [Geometry Nothing GL.Triangles $ 
-                          [ HsGeom_cv (GL.Color3 1.0 0.0 0.0 :: GL.Color3 GL.GLfloat) $
-                                  [ GL.Vertex3 0.0 0.0 0.0, GL.Vertex3 2.0 0.0 0.0, GL.Vertex3 1.0 2.0 0.0]
-                          , HsGeom_cv (GL.Color3 0.0 0.0 1.0 :: GL.Color3 GL.GLfloat) $
-                                  [ GL.Vertex3 0.0 0.0 0.0, GL.Vertex3 2.0 0.0 0.0, GL.Vertex3 1.0 (-2.0) 0.0]
-                          ]]
-          ; GLUT.mainLoop
-          }
--}
-         
+main = do { evalView $ view }
 
 {- The remainder of this file contains examples of picture-generating 
    expressions.  These can either be entered into the ghc command line,
    or inserted into the "main" function as above and then compiled.
 -}
+
+view = (from4 35 G) :> (Surface red (Single 2500))
+view2 = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 D) :> (Slice reds)
 
 {-
 radiation_anim       = Anim [ Surface red (Single 20000) (from4 t G)
@@ -279,5 +184,4 @@ newFingers =
                   , Contour blues (Sampled 1500 500 5000) (sli t G)
                   ]
           | t <- [1..20] ]
-
 -}
