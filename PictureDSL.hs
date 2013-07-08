@@ -72,33 +72,6 @@ data Picture v =  Surface Colour (Sampling v)
 -- picture type that is independent of the source
 data View d v = d :> (Picture v)
 
-type Lookup a b = [(a, b)]
-
-
--- Old functions that are slow but a replacement has not been written yet
-transfer :: Colour -> Float -> Float -> Float -> Float -> GL.Color4 GL.GLfloat
-transfer Vis5D _     minv maxv 
-    = transfer_f (minv, maxv)
-transfer (Brewer color) alpha minv maxv 
-    = lookup_tab $ build_table (minv, maxv) (brewer color (realToFrac alpha) )
-transfer (X11 names) alpha minv maxv
-    = lookup_tab $ build_table (minv, maxv) (map (x11_rgb (realToFrac alpha)) names)
-
-lookup_tab :: (Real a, InvInterp a, Interp b) => Lookup a b -> a -> b
-lookup_tab p v 
-    = case lookup' Nothing p v of
-        (Nothing,      Just c)       -> snd c
-        (Just c,       Nothing)      -> snd c
-        (Just (k1,c1), Just (k2,c2)) -> interp (inv_interp v k1 k2) c1 c2
-      where
-        lookup' prev (e:ps) v | v <= fst e = (prev,   Just e)
-                              | null ps    = (Just e, Nothing)
-                              | otherwise  = lookup' (Just e) ps v
-
-build_table :: (Enum a, Fractional a) => (a,a) -> [b] -> Lookup a b
-build_table (l,u) cols = zip [l, l+step ..] cols
-                         where step = (u - l) / realToFrac (length cols - 1)
-
 evalPicture :: (Enum a, Interp a, InvInterp a, Dataset d) => View d a -> HsScene
 evalPicture (source :> (Surface pal levels)) = 
   unsafePerformIO(putStrLn $ show dx ++ " " ++ show dy ++ " " ++ show dz) `seq`

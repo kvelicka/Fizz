@@ -31,12 +31,37 @@ data Palette = MReds | MBlues | MGreens | Yellows
 data ColourName = Blue | Red | Green | Orange | White | Yellow
                   deriving Show
 
+type Lookup a b = [(a, b)]                  
 
 -- An important operation with colours is doing interpolation.
 -- We support this in the viewer by making colours instances of two
 -- powerful algebraic structures, general functors and applicative
 -- functors.  This allows us to lift computations from values up
 -- to computations over colours.
+
+-- Old functions that are slow but a replacement has not been written yet
+transfer :: Colour -> Float -> Float -> Float -> Float -> GL.Color4 GL.GLfloat
+transfer Vis5D _     minv maxv 
+    = transfer_f (minv, maxv)
+transfer (Brewer color) alpha minv maxv 
+    = lookup_tab $ build_table (minv, maxv) (brewer color (realToFrac alpha) )
+transfer (X11 names) alpha minv maxv
+    = lookup_tab $ build_table (minv, maxv) (map (x11_rgb (realToFrac alpha)) names)
+
+lookup_tab :: (Real a, InvInterp a, Interp b) => Lookup a b -> a -> b
+lookup_tab p v 
+    = case lookup' Nothing p v of
+        (Nothing,      Just c)       -> snd c
+        (Just c,       Nothing)      -> snd c
+        (Just (k1,c1), Just (k2,c2)) -> interp (inv_interp v k1 k2) c1 c2
+      where
+        lookup' prev (e:ps) v | v <= fst e = (prev,   Just e)
+                              | null ps    = (Just e, Nothing)
+                              | otherwise  = lookup' (Just e) ps v
+
+build_table :: (Enum a, Fractional a) => (a,a) -> [b] -> Lookup a b
+build_table (l,u) cols = zip [l, l+step ..] cols
+                         where step = (u - l) / realToFrac (length cols - 1)
 
 
 transfer_t :: (Real a) => (a,a) -> [GL.Color4 GL.GLfloat] -> a -> GL.Color4 GL.GLfloat
@@ -53,7 +78,6 @@ transfer_t (l,u) ramp
                         then arr!a
                         else interp (t - toFloat b) (arr!a) (arr!b)
 
-
 -- Transfer function used in Vis5D
 transfer_f :: (Real a) => (a,a) -> a -> GL.Color4 GL.GLfloat
 transfer_f (l,u) v = GL.Color4 (r/256.0) (g/256.0) (b/256.0) (toFloat a/256.0)
@@ -67,9 +91,6 @@ transfer_f (l,u) v = GL.Color4 (r/256.0) (g/256.0) (b/256.0) (toFloat a/256.0)
                        pCURVE    = 1.4
                        pBIAS     = 1.0
                        pALPHAPOW = 2.0
-
-
-
 
 x11_rgb :: GL.GLfloat -> ColourName -> GL.Color4 GL.GLfloat
 x11_rgb a cn = case cn of
