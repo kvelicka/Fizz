@@ -48,14 +48,7 @@ instance Show Species where
   show Cx   = "Cx"
   show Cy   = "Cy"
   show Cz   = "Cz"
-  show Mv   = "Mv"
-
-{- Reason: trying to get rid of the datatype and use Views
-type Time = Int
-
-data VisData = From (Sampling Int) (Sampling Int) (Sampling Int) Time Species
-               deriving Eq
--}                                 
+  show Mv   = "Mv"                                
 
 type Time = Int
 
