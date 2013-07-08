@@ -207,24 +207,24 @@ instance Cell Cell_4 MyVertex where
 -- to the number of CELLS along each dimension.
 cubicGeom :: (Floating a) => FizzData DIM3 v -> Stream Cell_8 MyVertex (Vertex3 a)
 cubicGeom f 
-    = cubicGrid (dimensions f) $ (cubicPoints f)
+    = cubicGrid (dimensions $ shape f) $ (cubicPoints f)
 
 -- Generate a list of coordinates for a (xsz x ysz x zsz)-cube, starting
 -- from (0,0,0).
 cubicPoints :: (Num a) => FizzData DIM3 v -> [Vertex3 a]
 cubicPoints g = [ Vertex3 (fromIntegral i) (fromIntegral j) (fromIntegral k)
-                | k <- [0 .. dim_z (shape g) - 1]
-                , j <- [0 .. dim_y (shape g) - 1]
-                , i <- [0 .. dim_x (shape g) - 1]
+                | k <- listZ (shape g)
+                , j <- listY (shape g)
+                , i <- listX (shape g)
                 ]
 
 -- Generate a stream (dataset) of 8-tuple cell samples taken from
 -- an input stream of values.  The dataset is an (xmax x ymax x zmax)
 -- cube where the components here refer to the size of a dimension 
 -- in POINTs.
-{-
-cubicGrid :: DIM3 -> [a] -> Stream Cell_8 MyVertex a
-cubicGrid (Z :. zmax :. ymax :. xmax) 
+
+cubicGrid :: (Int,Int,Int) -> [a] -> Stream Cell_8 MyVertex a
+cubicGrid (xmax,ymax,zmax) 
     = Stream . (discontinuities (0,0,0)) . zipCube
       where
           zipCube stream = zipWith8 Cell_8 stream
@@ -244,7 +244,8 @@ cubicGrid (Z :. zmax :. ymax :. xmax)
               | j==(ymax-1)   =    discontinuities (0,0,k+1) (drop (xmax-1) xs)
               | i==(xmax-1)   =    discontinuities (0,j+1,k) xs
               | otherwise     = x: discontinuities (i+1,j,k) xs
--}
+
+{-
 cubicGrid :: (Int,Int,Int) -> [a] -> Stream Cell_8 MyVertex a
 cubicGrid (xmax,ymax,zmax) 
     = Stream . (discontinuities (0,0,0)) . zipCube
@@ -266,6 +267,7 @@ cubicGrid (xmax,ymax,zmax)
               | j==ymax   =    discontinuities (0,0,k+1) (drop xmax xs)
               | i==xmax   =    discontinuities (0,j+1,k) xs
               | otherwise = x: discontinuities (i+1,j,k) xs
+-}
 
 {- "Current" implementation
 cubicGrid :: DIM3 -> [a] -> Stream Cell_8 MyVertex a
@@ -292,18 +294,20 @@ cubicGrid (Z :. zmax :. ymax :. xmax)
 -}              
 
 squareGrid :: DIM2 -> [a] -> Stream Cell_4 MyVertex a
-squareGrid (Z :. ymax :. xmax) 
+squareGrid (Z :. samplingY :. samplingX) 
     = Stream . (discontinuities (0,0)) . zipSquare
       where
           zipSquare stream = zipWith4 Cell_4 stream
                                              (drop 1 stream)
                                              (drop (line+1) stream)
                                              (drop line stream)
-          line  = xmax+1
+          dx = samplingSize samplingX
+          dy = samplingSize samplingY
+          line  = dy + 1
           discontinuities _ [] = []
           discontinuities (i,j) (x:xs)
-              | j==ymax   = []
-              | i==xmax   =    discontinuities (0,j+1) xs
+              | j==dy   = []
+              | i==dx   =    discontinuities (0,j+1) xs
               | otherwise = x: discontinuities (i+1,j) xs
 
 
