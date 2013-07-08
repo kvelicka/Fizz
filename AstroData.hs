@@ -174,17 +174,3 @@ readAstroData d
          ; return $ FizzData basename dim b $ vs
          }
   
-bytesToFloats :: BS.ByteString -> [Float]
-bytesToFloats bs 
-    | BS.null bs   = []
-    | otherwise      = (sampleToFloat $ Sample s):bytesToFloats post
-                       where
-                           (pre,post) = BS.splitAt 4 bs
-                           [a,b,c,d]  = BS.unpack pre
-                           -- Reverse version
-                        -- [d,c,b,a]  = BS.unpack pre
-                           s = (a32 .|. b32 .|. c32 .|. d32)
-                           a32 :: Word32 = fromIntegral a `shiftL` 24
-                           b32 :: Word32 = fromIntegral b `shiftL` 16
-                           c32 :: Word32 = fromIntegral c `shiftL`  8
-                           d32 :: Word32 = fromIntegral d

@@ -34,10 +34,6 @@ prop_fp_float fp =
     let lhs :: Float = ((fromIntegral $ mantissa fp) * 10.0 ^^ (exponent fp))
     in lhs == (fromRational.toRational $ fp)
 
-
-sampleToFloat :: Sample -> Float
-sampleToFloat = fromRational . toRational . fromSample
-{-
 bytesToSamples :: BS.ByteString -> [Sample]
 bytesToSamples bs 
     | BS.null bs   = []
@@ -50,18 +46,9 @@ bytesToSamples bs
                            b32 :: Word32 = fromIntegral b `shiftL` 16
                            c32 :: Word32 = fromIntegral c `shiftL`  8
                            d32 :: Word32 = fromIntegral d
--}
 
--- A reversed version
-bytesToSamples :: BS.ByteString -> [Sample]
-bytesToSamples bs 
-    | BS.null bs   = []
-    | otherwise      = (Sample s):bytesToSamples post
-                       where
-                           (pre,post) = BS.splitAt 4 bs
-                           [d,c,b,a]  = BS.unpack pre
-                           s = (a32 .|. b32 .|. c32 .|. d32)
-                           a32 :: Word32 = fromIntegral a `shiftL` 24
-                           b32 :: Word32 = fromIntegral b `shiftL` 16
-                           c32 :: Word32 = fromIntegral c `shiftL`  8
-                           d32 :: Word32 = fromIntegral d
+sampleToFloat :: Sample -> Float
+sampleToFloat = fromRational . toRational . fromSample
+
+bytesToFloats :: BS.ByteString -> [Float]
+bytesToFloats bs = map sampleToFloat $ bytesToSamples bs
