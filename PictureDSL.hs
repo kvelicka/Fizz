@@ -218,32 +218,37 @@ isosurf = Algorithms.iso
 
 evalPicture :: (Enum a, Interp a, InvInterp a, Dataset d) => View d a -> HsScene
 evalPicture (source :> (Surface pal levels)) = 
+  --unsafePerformIO(mapM_ (putStrLn.show) $ CellTypes.stream $ points) `seq`
   Group static geomlist
   where
     field = unsafePerformIO $ readData source
+    (dx,dy,dz) = dimensions field
+    
     mkGrid :: [a] -> Stream Cell_8 MyVertex a
-    mkGrid = cubicGrid (dimensions field)   
-    points = trace "points" $ mkGrid $ cubicPoints field
-    vcells = trace "vcells" $ mkGrid $ Dataset.stream field
-    t_vals = trace "t_vals" $ fmap toFloat $ samplingToList levels
-    colour = transfer pal 1.0 1.0 (toFloat.length $ t_vals)
-    contours = trace "contours" $ map (\t -> concat $ Algorithms.isosurface t vcells points) $ t_vals
-    geomlist = trace "geomlist" $ zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
+    mkGrid = cubicGrid (dx,dy,dz)
+    
+    points   = mkGrid $ cubicPoints field
+    vcells   = mkGrid $ Dataset.stream field
+    t_vals   = fmap toFloat $ samplingToList levels
+    colour   = transfer pal 1.0 1.0 (toFloat.length $ t_vals)
+    contours = map (\t -> concat $ Algorithms.isosurface t vcells points) $ t_vals
+    geomlist = zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
 
 evalPicture (source :> (Slice pal)) =
   Group static $ [plane rows]
   where
-      field  =     unsafePerformIO $ readData source
-      values =     Dataset.stream field
+      field      = unsafePerformIO $ readData source
+      values     = Dataset.stream field
       (dx,dy,dz) = dimensions field
-      points =     planePoints dx dy dz
-      colour =     transfer pal 1.0 (minimum $ values) (maximum $ values)
-      colours ::   [GL.Color4 GL.GLfloat] = map colour values
+      points     = planePoints dx dy dz
+      colour     = transfer pal 1.0 (minimum $ values) (maximum $ values)
+      colours   :: [GL.Color4 GL.GLfloat] = map colour values
+      rows       = splitInto dx {- steps -} $ zip points colours
       --steps  = case slice_plane (space field) of
       --           X_equals _ -> dx
       --           Y_equals _ -> dy
       --           Z_equals _ -> dz
-      rows =       splitInto dx {- steps -} $ zip points colours
+
 
 planePoints :: Int -> Int -> Int -> [GL.Vertex3 GL.GLfloat]
 planePoints dx dy dz

@@ -137,7 +137,7 @@ main = do { {-exec $ Anim [ Surface red (Single 2500) (from4 35 G)
                         , Surface green (Single 20000) (from4 35 G)
                         ]-}
               --let view = (from4 35 G) :> (Surface red (Single 2500))
-            ; evalView $ view2
+            ; evalView $ view
             --let spec :: Picture Float
             --    spec = Volume reds (from4 60 G)
               --spec = Scatter (from4 60 Mv) (from4 60 D) (from4 60 Hp)
