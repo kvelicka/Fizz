@@ -1,0 +1,12 @@
+IntOps.hs - Definition for Nat is a hack.
+PictureDSL - Rewrite plane_points
+
+Profiling:
+  Options to compile with profiling
+  -prof -auto-all -rtsopts
+
+Options when running to generate profiling files
+  when running +RRS -p -RTS
+
+Look in the haskell guide:
+  rts options for heap profiling

@@ -133,13 +133,32 @@ cell_size_3D f = (dim_x f - 1, dim_y f - 1, dim_z f - 1)
 
 -}
 
-transfer :: Real v => Colour -> GL.GLfloat -> v -> v -> v -> GL.Color4 GL.GLfloat
+transfer :: Colour -> Float -> Float -> Float -> Float -> GL.Color4 GL.GLfloat
 transfer Vis5D _     minv maxv 
     = transfer_f (minv, maxv)
 transfer (Brewer color) alpha minv maxv 
-    = transfer_t (minv, maxv) (brewer color alpha)
+    = lookup_tab $ build_table (minv, maxv) (brewer color (realToFrac alpha) )
 transfer (X11 names) alpha minv maxv
-    = transfer_t (minv, maxv) (map (x11_rgb alpha) names)
+    = lookup_tab $ build_table (minv, maxv) (map (x11_rgb (realToFrac alpha)) names)
+
+type Lookup a b = [(a, b)]
+
+-- Old functions that are slow but a replacement has not been written yet
+lookup_tab :: (Real a, InvInterp a, Interp b) => Lookup a b -> a -> b
+lookup_tab p v 
+    = case lookup' Nothing p v of
+        (Nothing,      Just c)       -> snd c
+        (Just c,       Nothing)      -> snd c
+        (Just (k1,c1), Just (k2,c2)) -> interp (inv_interp v k1 k2) c1 c2
+      where
+        lookup' prev (e:ps) v | v <= fst e = (prev,   Just e)
+                              | null ps    = (Just e, Nothing)
+                              | otherwise  = lookup' (Just e) ps v
+
+
+build_table :: (Enum a, Fractional a) => (a,a) -> [b] -> Lookup a b
+build_table (l,u) cols = zip [l, l+step ..] cols
+                         where step = (u - l) / realToFrac (length cols - 1)
 
 
 -- DSL evaluation --------------------------------------------------
@@ -212,29 +231,25 @@ evalPicture (source :> (Surface pal levels)) =
     geomlist = trace "geomlist" $ zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
 
 evalPicture (source :> (Slice pal)) =
-  unsafePerformIO(--(putStrLn $ "steps :" ++ (show dx) ++ " nr vals " ++ (show . length $ Dataset.stream $ field)) >>
-  (mapM_ (putStrLn . show) (head rows)) >> 
-  (putStrLn "DONE.")) `seq`
-  --(putStrLn $ show (minimum $ Dataset.stream $ field) ++ " - " ++ show (maximum $ Dataset.stream $ field))) `seq` 
   Group static $ [plane rows]
   where
-      field  = unsafePerformIO $ readData source
-      values = Dataset.stream field
-      (dx,dy,dz)    = dimensions field
-      points = trace (show dx ++ " " ++ show dy ++ " " ++ show dz) $ plane_points dx dy dz
-      colour = transfer pal 1.0 (minimum $ values) (maximum $ values)
-      colours :: [GL.Color4 GL.GLfloat] = map colour values
+      field  =     unsafePerformIO $ readData source
+      values =     Dataset.stream field
+      (dx,dy,dz) = dimensions field
+      points =     planePoints dx dy dz
+      colour =     transfer pal 1.0 (minimum $ values) (maximum $ values)
+      colours ::   [GL.Color4 GL.GLfloat] = map colour values
       --steps  = case slice_plane (space field) of
       --           X_equals _ -> dx
       --           Y_equals _ -> dy
-      --          Z_equals _ -> dz
-      rows   = splitInto dx {- steps -} $ zip points colours
+      --           Z_equals _ -> dz
+      rows =       splitInto dx {- steps -} $ zip points colours
 
-plane_points :: Int -> Int -> Int -> [GL.Vertex3 GL.GLfloat]
-plane_points dx dy dz
-  | dx == 1   =   trace "dx evaluated" $ [GL.Vertex3 0.0 (realToFrac y) (realToFrac z) | y <- [0 .. dy-1], z <- [0..dz-1]]
-  | dy == 1   =   trace "dy evaluated" $ [GL.Vertex3 (realToFrac x) 0.0 (realToFrac z) | x <- [0 .. dx-1], z <- [0..dz-1]]
-  | dz == 1   =   trace "dz evaluated" $ [GL.Vertex3 (realToFrac x) (realToFrac y) 124.0 | y <- [0 .. dy-1], x <- [0..dx-1]]
+planePoints :: Int -> Int -> Int -> [GL.Vertex3 GL.GLfloat]
+planePoints dx dy dz
+  | dx == 1 = trace "dx evaluated" $ [GL.Vertex3 0.0 (realToFrac y) (realToFrac z)   | y <- [0 .. dy-1], z <- [0..dz-1]]
+  | dy == 1 = trace "dy evaluated" $ [GL.Vertex3 (realToFrac x) 0.0 (realToFrac z)   | x <- [0 .. dx-1], z <- [0..dz-1]]
+  | dz == 1 = trace "dz evaluated" $ [GL.Vertex3 (realToFrac x) (realToFrac y) 124.0 | y <- [0 .. dy-1], x <- [0..dx-1]]
 
 
 --evalPicture (source :> (Draw ps)) =
