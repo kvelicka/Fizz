@@ -222,9 +222,9 @@ cubicPoints g = [ Vertex3 (fromIntegral i) (fromIntegral j) (fromIntegral k)
 -- an input stream of values.  The dataset is an (xmax x ymax x zmax)
 -- cube where the components here refer to the size of a dimension 
 -- in POINTs.
-{-
-cubicGrid :: DIM3 -> [a] -> Stream Cell_8 MyVertex a
-cubicGrid (Z :. zmax :. ymax :. xmax) 
+
+cubicGrid :: (Int,Int,Int) -> [a] -> Stream Cell_8 MyVertex a
+cubicGrid (xmax,ymax,zmax) 
     = Stream . (discontinuities (0,0,0)) . zipCube
       where
           zipCube stream = zipWith8 Cell_8 stream
@@ -244,7 +244,8 @@ cubicGrid (Z :. zmax :. ymax :. xmax)
               | j==(ymax-1)   =    discontinuities (0,0,k+1) (drop (xmax-1) xs)
               | i==(xmax-1)   =    discontinuities (0,j+1,k) xs
               | otherwise     = x: discontinuities (i+1,j,k) xs
--}
+
+{-
 cubicGrid :: (Int,Int,Int) -> [a] -> Stream Cell_8 MyVertex a
 cubicGrid (xmax,ymax,zmax) 
     = Stream . (discontinuities (0,0,0)) . zipCube
@@ -266,6 +267,7 @@ cubicGrid (xmax,ymax,zmax)
               | j==ymax   =    discontinuities (0,0,k+1) (drop xmax xs)
               | i==xmax   =    discontinuities (0,j+1,k) xs
               | otherwise = x: discontinuities (i+1,j,k) xs
+-}
 
 {- "Current" implementation
 cubicGrid :: DIM3 -> [a] -> Stream Cell_8 MyVertex a

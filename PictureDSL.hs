@@ -218,7 +218,8 @@ isosurf = Algorithms.iso
 
 evalPicture :: (Enum a, Interp a, InvInterp a, Dataset d) => View d a -> HsScene
 evalPicture (source :> (Surface pal levels)) = 
-  unsafePerformIO(mapM_ (putStrLn.show) $ CellTypes.stream $ points) `seq`
+  --unsafePerformIO(mapM_ (putStrLn.show) $ CellTypes.stream $ points) `seq`
+  unsafePerformIO(putStrLn $ show dx ++ " " ++ show dy ++ " " ++ show dz) `seq`
   Group static geomlist
   where
     field      = unsafePerformIO $ readData source
