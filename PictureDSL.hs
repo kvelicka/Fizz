@@ -10,8 +10,6 @@
 
 module PictureDSL where
 
---import Graphics.Rendering.OpenGL.GL.BasicTypes
---import Graphics.Rendering.OpenGL.GL.VertexSpec
 import Control.Applicative
 import Debug.Trace (trace)
 import Prelude hiding (lookup)
@@ -74,65 +72,10 @@ data Picture v =  Surface Colour (Sampling v)
 -- picture type that is independent of the source
 data View d v = d :> (Picture v)
 
+type Lookup a b = [(a, b)]
 
--- Implementing the DSL --------------------------------------
---
--- Calculate the astro files required to generate a given picture.
 
---file_list :: (Real v, Dataset Source) => View v -> [IO (FizzData3D v)]
--- file_list (Contour _ _ d)    = expr_list d
---file_list (source :> _) = [readData source]
--- file_list (Volume _ d)       = expr_list d
--- file_list (Slice _ d)        = expr_list d
--- file_list (Scatter d1 d2 d3) = concatMap expr_list [d1, d2, d3]
--- file_list (Draw ps)          = concatMap file_list ps
--- file_list (Anim ps)          = concatMap file_list ps
-
---expr_list :: DataExpr v -> [(String, IO (Grid sh v))]
---expr_list (Use d)      = [(resource d, read_data d)]
---expr_list (Derive _ e) = expr_list e
---expr_list (Select _ e) = expr_list e
-
--- For the Contour command, the slice plane is implicit;
--- the following function determines which plane is 
--- being used.
-
-{-
-slice_plane :: Dimension -> Plane
-slice_plane (Dim3D r _ _) | singleton r = X_equals . head . range_to_list $ r
-slice_plane (Dim3D _ r _) | singleton r = Y_equals . head . range_to_list $ r
-slice_plane (Dim3D _ _ r) | singleton r = Z_equals . head . range_to_list $ r
-slice_plane _                           = error "slice_plane: no singleton dimension"
-
-singleton :: Ord a => Sampling a -> Bool 
-singleton (Single _)      = True
-singleton (Range f t)     = f == t
-singleton (Sampled f s t) = f == t || f == s || s > t
-
-plane_points :: Dimension -> [GL.Vertex3 GL.GLfloat]
-plane_points dim
-    = case slice_plane dim of
-        X_equals v -> [coord v cy cz | cz <- rng_z, cy <- rng_y]
-        Y_equals v -> [coord cx v cz | cz <- rng_z, cx <- rng_x]
-        Z_equals v -> [coord cx cy v | cy <- rng_y, cx <- rng_x]
-      where
-        rng_z = range_to_list . dim3d_z $ dim
-        rng_y = range_to_list . dim3d_y $ dim
-        rng_x = range_to_list . dim3d_x $ dim
-        coord x y z = GL.Vertex3 (toFloat x) (toFloat y) (toFloat z)
--}
-
-{-
-cell_size_2D :: Grid a -> Plane -> (Int, Int)
-cell_size_2D f (X_equals _) = (dim_y f - 1, dim_z f - 1)
-cell_size_2D f (Y_equals _) = (dim_x f - 1, dim_z f - 1)
-cell_size_2D f (Z_equals _) = (dim_x f - 1, dim_y f - 1)
-
-cell_size_3D :: Grid a -> (Int, Int, Int)
-cell_size_3D f = (dim_x f - 1, dim_y f - 1, dim_z f - 1)
-
--}
-
+-- Old functions that are slow but a replacement has not been written yet
 transfer :: Colour -> Float -> Float -> Float -> Float -> GL.Color4 GL.GLfloat
 transfer Vis5D _     minv maxv 
     = transfer_f (minv, maxv)
@@ -141,9 +84,6 @@ transfer (Brewer color) alpha minv maxv
 transfer (X11 names) alpha minv maxv
     = lookup_tab $ build_table (minv, maxv) (map (x11_rgb (realToFrac alpha)) names)
 
-type Lookup a b = [(a, b)]
-
--- Old functions that are slow but a replacement has not been written yet
 lookup_tab :: (Real a, InvInterp a, Interp b) => Lookup a b -> a -> b
 lookup_tab p v 
     = case lookup' Nothing p v of
@@ -155,70 +95,12 @@ lookup_tab p v
                               | null ps    = (Just e, Nothing)
                               | otherwise  = lookup' (Just e) ps v
 
-
 build_table :: (Enum a, Fractional a) => (a,a) -> [b] -> Lookup a b
 build_table (l,u) cols = zip [l, l+step ..] cols
                          where step = (u - l) / realToFrac (length cols - 1)
 
-
--- DSL evaluation --------------------------------------------------
---
--- Step 1 - interpretation of data expressions.  These will 
--- yield a field (see RectGrid) that contains the values to
--- be visualized.
-
-
---eval_data :: (Eq v) => Context -> Source d -> FizzData3D v
---eval_data env d      = lookup env (show $ readData d)
-
-{-
-eval_data env (Derive f de) = ds { values = (map f) . values $ ds 
-                                 , minv   = f $ minv ds
-                                 , maxv   = f $ maxv ds
-                                 }
-                              where
-                                  ds = eval_data env de
-eval_data env (Select p de) = sample_plane p (eval_data env de)
--}
-
-{-
-sample_plane :: Eq a => Plane -> Grid a -> Grid a
-sample_plane (X_equals v) f | v `elem` (range_x f)
-    = f { space  = (space f) { dim3d_x = Single v }
-        , values = filterp (((toFloat v)==) . x_) f
-        }
-sample_plane (Y_equals v) f | v `elem` (range_y f)
-    = f { space  = (space f) { dim3d_y = Single v }
-        , values = filterp (((toFloat v)==) . y_) f
-        }
-sample_plane (Z_equals v) f | v `elem` (range_z f)
-    = f { space  = (space f) { dim3d_z = Single v }
-        , values = filterp (((toFloat v)==) . z_) f
-        }
-sample_plane p _ 
-    = error "Attempting to sample on a plane not present in dataset."
-
-filterp :: (GL.Vertex3 GL.GLfloat -> Bool) -> Grid a -> [a]
-filterp p f = map fst . filter (p.snd) $ zip (values f) (cubicPoints f)
--}
-
-
--- Step 2: Picture evaluation
---
--- Essentially a much neater implementation of the various
--- details previously resolved through the command-line
--- interpreter.
-
-{-
-isosurf :: (Cell (ICell sh) a, Applicative (IVert sh), InvInterp a, IsoCells sh, Elt a,
-            (IVert sh)  ~ GL.Vertex3 ) =>
-           a -> A.Array sh a -> [[IVert sh Float]]
-isosurf = Algorithms.iso           
--}
-
 evalPicture :: (Enum a, Interp a, InvInterp a, Dataset d) => View d a -> HsScene
 evalPicture (source :> (Surface pal levels)) = 
-  --unsafePerformIO(mapM_ (putStrLn.show) $ CellTypes.stream $ points) `seq`
   unsafePerformIO(putStrLn $ show dx ++ " " ++ show dy ++ " " ++ show dz) `seq`
   Group static geomlist
   where
@@ -248,35 +130,12 @@ evalPicture (source :> (Slice pal)) =
       --           Y_equals _ -> dy
       --           Z_equals _ -> dz
 
-
 planePoints :: Int -> Int -> Int -> [GL.Vertex3 GL.GLfloat]
 planePoints dx dy dz
   | dx == 1 = trace "dx evaluated" $ [GL.Vertex3 0.0 (realToFrac y) (realToFrac z)   | y <- [0 .. dy-1], z <- [0..dz-1]]
   | dy == 1 = trace "dy evaluated" $ [GL.Vertex3 (realToFrac x) 0.0 (realToFrac z)   | x <- [0 .. dx-1], z <- [0..dz-1]]
   | dz == 1 = trace "dz evaluated" $ [GL.Vertex3 (realToFrac x) (realToFrac y) 124.0 | y <- [0 .. dy-1], x <- [0..dx-1]]
 
-
---evalPicture (source :> (Draw ps)) =
--- Group static $ map evalPicture ps
-
-{- Reason: Old picture DSL evaluator, replaced with evalPicture
-eval_picture :: (Enum a, Interp a, InvInterp a) => Context -> Picture a -> HsScene
-                
-eval_picture env (Surface pal levels field)
-    = Group static geomlist
-      where
-          (Use ads) = eval_data env field
-          field = read_astro_data ads
-          points = mkgrid $ cubicPoints field       -- :: Stream Cell_8 MyVertex Vertex3
-          vcells = mkgrid $ extract $ values field  -- :: Stream Cell_8 MyVertex Float
-          t_vals = fmap toFloat $ range_to_list levels             -- :: Num a ??
-          colour = transfer pal 1.0 1.0 (toFloat.length $ t_vals)
-          contours = map (\t -> concat $ Algorithms.isosurface t vcells points) $ t_vals
-          geomlist = zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
-
-eval_picture (Draw ps)
-    = Group static $ map eval_picture ps
--}
 {-
 eval_picture env (Volume pal de)
     = volume_geom dim points colours
@@ -286,35 +145,6 @@ eval_picture env (Volume pal de)
           points = cubicPoints field
           colour = transfer pal 0.4 (minv field) (maxv field)
           colours :: [GL.Color4 GL.GLfloat] = map colour (values field)
--}
-
-
-
-
-
-{-
-slice_plane :: Dimension -> Plane
-slice_plane (Dim3D r _ _) | singleton r = X_equals . head . range_to_list $ r
-slice_plane (Dim3D _ r _) | singleton r = Y_equals . head . range_to_list $ r
-slice_plane (Dim3D _ _ r) | singleton r = Z_equals . head . range_to_list $ r
-slice_plane _                           = error "slice_plane: no singleton dimension"
-
-singleton :: Ord a => Sampling a -> Bool 
-singleton (Single _)      = True
-singleton (Range f t)     = f == t
-singleton (Sampled f s t) = f == t || f == s || s > t
-
-plane_points :: Dimension -> [GL.Vertex3 GL.GLfloat]
-plane_points dim
-    = case slice_plane dim of
-        X_equals v -> [coord v cy cz | cz <- rng_z, cy <- rng_y]
-        Y_equals v -> [coord cx v cz | cz <- rng_z, cx <- rng_x]
-        Z_equals v -> [coord cx cy v | cy <- rng_y, cx <- rng_x]
-      where
-        rng_z = range_to_list . dim3d_z $ dim
-        rng_y = range_to_list . dim3d_y $ dim
-        rng_x = range_to_list . dim3d_x $ dim
-        coord x y z = GL.Vertex3 (toFloat x) (toFloat y) (toFloat z)
 -}
 {-
 eval_picture env (Hedgehog pal deu dev dew)
@@ -327,10 +157,7 @@ eval_picture env (Hedgehog pal deu dev dew)
           points = cubicPoints fieldu
           geom   = zipWith4 hogs points (values fieldu) (values fieldv) (values fieldw)
 -}
-
-
--- hedgehog (first derivative, across the cell)
-{-
+{- hedgehog (first derivative, across the cell)
 hog' (rngx,rngy,rngz) cell
     = GL.Vertex3 (4* dx/rngx) (4* dy/rngy) (4* dz/rngz)
       where
@@ -341,8 +168,6 @@ hog' (rngx,rngy,rngz) cell
           uf = \(u,_,_) -> u
           vf = \(_,v,_) -> v
           wf = \(_,_,w) -> w
-
-
 
 interpret v5d ("+v" : unm : vnm : wnm : s_ti : vals)
     = (hog_geom geo $ colour vals) : interpret v5d (drop 4 vals)
@@ -396,8 +221,6 @@ eval_picture (AContour pal levels field)
           geomlist = contour_geom contours (map colour [1.0 .. (toFloat.length $ t_vals)])
 -}
 {- 
-
-
 eval_picture (Contour pal levels field)
     = Group static [geomlist]
       where
