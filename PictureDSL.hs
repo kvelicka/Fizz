@@ -59,7 +59,7 @@ from4 t s = astroFour t s
 data Picture v =  Surface Colour (Sampling v) 
                | Slice  Colour
             -- | Volume Colour
-            -- | Contour Colour (Sampling v) 
+               | Contour Colour (Sampling v) 
             -- | ASurface Colour (Sampling v) 
             --  Following take 3 data expressions, need to confirm how to convert
             -- | Hedgehog Colour (DataExpr v) (DataExpr v) (DataExpr v)
@@ -103,6 +103,38 @@ evalPicture (source :> (Slice pal)) =
       --           Y_equals _ -> dy
       --           Z_equals _ -> dz
 
+{- 
+eval_picture (Contour pal levels field)
+    = Group static [geomlist]
+      where
+          -- (Use ads) = de -- eval_data env de
+          -- field = read_astro ads
+          mkgrid = cubicGrid (shape field)
+          points = mkgrid $ cubicPoints field
+          vcells = mkgrid $ field
+          t_vals = range_to_list levels
+          colour = transfer pal 1.0 1.0 (toFloat.length $ t_vals)
+          --contours = map (\t -> concat $ Algorithms.iso t vcells points) $ t_vals
+          --arr = values field
+          --surf t = concat $ isosurf t arr
+          --contours = map surf t_vals
+          contours = map (\t -> concat $ Algorithms.isosurface t (Stream . toList . values $ field)) $ t_vals
+          geomlist = contour_geom contours (map colour [1.0 .. (toFloat.length $ t_vals)])
+-}
+eval_picture env (Contour pal levels de)
+    = Group static [geometry]
+      where
+          field  = env --eval_data env de
+          plane  = slice_plane (space field)
+          mkgrid = squareGrid (cell_size_2D field plane)
+          points = mkgrid $ plane_points (space field)
+          vcells = mkgrid $ values field
+          t_vals = range_to_list levels
+          colour = transfer pal 1.0 1.0 (toFloat.length $ t_vals)
+          contours = map (\t -> concat $ Algorithms.isosurface t vcells points) $ t_vals
+          geometry = contour_geom contours (map colour [1.0 .. (toFloat.length $ t_vals)])
+
+-- Placeholder, needs rewriting
 planePoints :: Int -> Int -> Int -> [GL.Vertex3 GL.GLfloat]
 planePoints dx dy dz
   | dx == 1 = trace "dx evaluated" $ [GL.Vertex3 0.0 (realToFrac y) (realToFrac z)   | y <- [0 .. dy-1], z <- [0..dz-1]]
@@ -192,38 +224,6 @@ eval_picture (AContour pal levels field)
           --contours = map surf t_vals
           contours = map (\t -> concat $ Algorithms.isosurface t (values field)) $ t_vals
           geomlist = contour_geom contours (map colour [1.0 .. (toFloat.length $ t_vals)])
--}
-{- 
-eval_picture (Contour pal levels field)
-    = Group static [geomlist]
-      where
-          -- (Use ads) = de -- eval_data env de
-          -- field = read_astro ads
-          mkgrid = cubicGrid (shape field)
-          points = mkgrid $ cubicPoints field
-          vcells = mkgrid $ field
-          t_vals = range_to_list levels
-          colour = transfer pal 1.0 1.0 (toFloat.length $ t_vals)
-          --contours = map (\t -> concat $ Algorithms.iso t vcells points) $ t_vals
-          --arr = values field
-          --surf t = concat $ isosurf t arr
-          --contours = map surf t_vals
-          contours = map (\t -> concat $ Algorithms.isosurface t (Stream . toList . values $ field)) $ t_vals
-          geomlist = contour_geom contours (map colour [1.0 .. (toFloat.length $ t_vals)])
--}
-{-
-eval_picture env (Contour pal levels de)
-    = Group static [geometry]
-      where
-          field  = env --eval_data env de
-          plane  = slice_plane (space field)
-          mkgrid = squareGrid (cell_size_2D field plane)
-          points = mkgrid $ plane_points (space field)
-          vcells = mkgrid $ values field
-          t_vals = range_to_list levels
-          colour = transfer pal 1.0 1.0 (toFloat.length $ t_vals)
-          contours = map (\t -> concat $ Algorithms.isosurface t vcells points) $ t_vals
-          geometry = contour_geom contours (map colour [1.0 .. (toFloat.length $ t_vals)])
 -}
 {-
 eval_picture env (Scatter ds1 ds2 ds3)
