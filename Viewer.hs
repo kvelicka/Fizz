@@ -78,7 +78,7 @@ evalView view@(source :> picture)  =
 -- main: if compiling, you must come up with a Picture expression here
 
 main :: IO ()
-main = do { evalView $ view3 }
+main = do { evalView $ view4 }
 
 {- The remainder of this file contains examples of picture-generating 
    expressions.  These can either be entered into the ghc command line,
@@ -87,7 +87,7 @@ main = do { evalView $ view3 }
 
 view = (from4 35 G) :> (Surface red (Single 2500))
 view2 = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 D) :> (Slice reds)
-view3 = (from4 35 G) :> (Contour red (Single 2500))
+view4 = (from4 35 G) :> (Contour green (Single 2500))
 
 {-
 radiation_anim       = Anim [ Surface red (Single 20000) (from4 t G)

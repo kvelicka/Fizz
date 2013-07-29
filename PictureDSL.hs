@@ -86,21 +86,21 @@ evalPicture (source :> (Surface pal levels)) =
     t_vals     = fmap toFloat $ samplingToList levels
     colour     = transfer pal 1.0 1.0 (genericLength $ t_vals)
     contours   = map (\t -> concat $ Algorithms.isosurface t vcells points) $ t_vals
-    geomlist   = zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
+    geomlist   = zipWith surface_geom contours $ repeat (map colour [1.0 .. (genericLength $ t_vals)])
 
 evalPicture (source :> (Contour pal levels))
     = Group static [geometry]
       where
-          field  = unsafePerformIO $ readData source
-          (dx,dy) = dimensions2D $ shape field
-          mkGrid :: [a] -> Stream Cell_4 MyVertex a
-          mkGrid = squareGrid (dx, dy)
-          points = mkGrid $ squarePoints field
-          vcells = mkGrid $ Dataset.stream field
-          t_vals = fmap toFloat $ samplingToList levels
-          colour = transfer pal 1.0 1.0 (genericLength $ t_vals)
+          field    = unsafePerformIO $ readData source
+          (dx,dy)  = dimensions2D $ shape field
+          mkGrid  :: [a] -> Stream Cell_4 MyVertex a
+          mkGrid   = squareGrid (dx, dy)
+          points   = mkGrid $ squarePoints field
+          vcells   = mkGrid $ Dataset.stream field
+          t_vals   = fmap toFloat $ samplingToList levels
+          colour   = transfer pal 1.0 1.0 (genericLength $ t_vals)
           contours = map (\t -> concat $ Algorithms.isosurface t vcells points) $ t_vals
-          geometry = contour_geom contours (map colour [1.0 .. (toFloat.length $ t_vals)])
+          geometry = contour_geom contours (map colour [1.0 .. (genericLength $ t_vals)])
 
 evalPicture (source :> (Slice pal)) =
   Group static $ [plane rows]
