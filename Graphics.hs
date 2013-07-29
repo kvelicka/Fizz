@@ -135,11 +135,14 @@ smap f (x:xs) = let fx = f $! x in fx:smap f xs
 
 volumeGeom :: (Int, Int, Int) -> [Vertex3 GLfloat] -> [Color4 GLfloat] -> HsScene
 volumeGeom (xsz,ysz,zsz) gs cs
-    = Group static $ transp ++ [Switch (planes yzplanes) (planes xzplanes) (planes xyplanes)]
+    = Group static $ transp ++ [Switch cyz cxz cxy]
       where
           transp   = [ Special $ blend      $= Enabled
 	                   , Special $ depthMask  $= Disabled
                      ]
+          cyz = compile Nothing $ Group static [(planes yzplanes) ]
+          cxz = compile Nothing $ Group static [(planes xzplanes) ]
+          cxy = compile Nothing $ Group static [(planes xyplanes)]
           xyrows   = splitInto xsz voxels
           xyplanes = splitInto ysz xyrows
           yzrows   = foldl' (zipWith $ flip (:)) (replicate xsz []) xyrows
