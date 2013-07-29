@@ -11,6 +11,7 @@
 module PictureDSL where
 
 import Control.Applicative
+import Data.List (genericLength)
 import Debug.Trace (trace)
 import Prelude hiding (lookup)
 import qualified Data.ByteString as BS
@@ -83,7 +84,7 @@ evalPicture (source :> (Surface pal levels)) =
     points     = mkGrid $ cubicPoints field
     vcells     = mkGrid $ Dataset.stream field
     t_vals     = fmap toFloat $ samplingToList levels
-    colour     = transfer pal 1.0 1.0 (toFloat.length $ t_vals)
+    colour     = transfer pal 1.0 1.0 (genericLength $ t_vals)
     contours   = map (\t -> concat $ Algorithms.isosurface t vcells points) $ t_vals
     geomlist   = zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
 
@@ -92,13 +93,12 @@ evalPicture (source :> (Contour pal levels))
       where
           field  = unsafePerformIO $ readData source
           (dx,dy) = dimensions2D $ shape field
-          plane  = 124 --slice_plane (space field)
           mkGrid :: [a] -> Stream Cell_4 MyVertex a
           mkGrid = squareGrid (dx, dy)
-          points = mkGrid $ planePoints2D dx dy
+          points = mkGrid $ squarePoints field
           vcells = mkGrid $ Dataset.stream field
           t_vals = fmap toFloat $ samplingToList levels
-          colour = transfer pal 1.0 1.0 (toFloat.length $ t_vals)
+          colour = transfer pal 1.0 1.0 (genericLength $ t_vals)
           contours = map (\t -> concat $ Algorithms.isosurface t vcells points) $ t_vals
           geometry = contour_geom contours (map colour [1.0 .. (toFloat.length $ t_vals)])
 
@@ -147,7 +147,7 @@ planePoints2D :: Int -> Int -> [GL.Vertex3 GL.GLfloat]
 planePoints2D dx dy
   | dx == 1 = trace "dx evaluated" $ [GL.Vertex3 0.0 (realToFrac y)  124.0 | y <- [0 .. dy-1]]
   | dy == 1 = trace "dy evaluated" $ [GL.Vertex3 (realToFrac x) 0.0  124.0 | x <- [0 .. dx-1]]
-  | otherwise = trace "otherwise" $ [GL.Vertex3 (realToFrac x) 0.0  124.0 | x <- [0 .. dx-1]]
+  | otherwise = trace "otherwise" $ [GL.Vertex3 (realToFrac x) (realToFrac dy)  124.0 | x <- [0 .. dx-1], dy <- [0 .. dy-1]]
 
 
 {-

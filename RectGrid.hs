@@ -218,6 +218,11 @@ cubicPoints g = [ Vertex3 (fromIntegral i) (fromIntegral j) (fromIntegral k)
                 , i <- listX (shape g)
                 ]
 
+squarePoints :: (Num a) => FizzData DIM3 v -> [Vertex3 a]
+squarePoints g = [ Vertex3 (fromIntegral i) (fromIntegral j) 124
+                 | j <- listY (shape g)
+                 , i <- listX (shape g)
+                 ]
 -- Generate a stream (dataset) of 8-tuple cell samples taken from
 -- an input stream of values.  The dataset is an (xmax x ymax x zmax)
 -- cube where the components here refer to the size of a dimension 
