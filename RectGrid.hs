@@ -245,21 +245,19 @@ cubicGrid (xmax,ymax,zmax)
               | i==(xmax-1)   =    discontinuities (0,j+1,k) xs
               | otherwise     = x: discontinuities (i+1,j,k) xs
 
-squareGrid :: DIM2 -> [a] -> Stream Cell_4 MyVertex a
-squareGrid (Z :. samplingY :. samplingX) 
+squareGrid :: (Int, Int) -> [a] -> Stream Cell_4 MyVertex a
+squareGrid (xmax,ymax) 
     = Stream . (discontinuities (0,0)) . zipSquare
       where
           zipSquare stream = zipWith4 Cell_4 stream
                                              (drop 1 stream)
                                              (drop (line+1) stream)
                                              (drop line stream)
-          dx = samplingSize samplingX
-          dy = samplingSize samplingY
-          line  = dy + 1
+          line  = ymax + 1
           discontinuities _ [] = []
           discontinuities (i,j) (x:xs)
-              | j==dy   = []
-              | i==dx   =    discontinuities (0,j+1) xs
+              | j==ymax   = []
+              | i==xmax   =    discontinuities (0,j+1) xs
               | otherwise = x: discontinuities (i+1,j) xs
 
 
