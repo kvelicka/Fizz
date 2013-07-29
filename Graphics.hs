@@ -133,12 +133,12 @@ planes vs = (Group static $ map plane vs)
 smap f [] = []
 smap f (x:xs) = let fx = f $! x in fx:smap f xs
 
-volume_geom :: (Int, Int, Int) -> [Vertex3 GLfloat] -> [Color4 GLfloat] -> HsScene
-volume_geom (xsz,ysz,zsz) gs cs
+volumeGeom :: (Int, Int, Int) -> [Vertex3 GLfloat] -> [Color4 GLfloat] -> HsScene
+volumeGeom (xsz,ysz,zsz) gs cs
     = Group static $ transp ++ [Switch (planes yzplanes) (planes xzplanes) (planes xyplanes)]
       where
           transp   = [ Special $ blend      $= Enabled
-	             , Special $ depthMask  $= Disabled
+	                   , Special $ depthMask  $= Disabled
                      ]
           xyrows   = splitInto xsz voxels
           xyplanes = splitInto ysz xyrows
