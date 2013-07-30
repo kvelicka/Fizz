@@ -1,5 +1,6 @@
 IntOps.hs - Definition for Nat is a hack.
 PictureDSL - Rewrite plane_points
+RectGrid.hs - rewrite squareGrid and cubicGrid
 
 Profiling:
   Options to compile with profiling
