@@ -2,12 +2,8 @@ module IntOps where
 
 import Test.SmallCheck
 
--- Hacky workaround, needs a fix?
-data Nat = N Int
-
--- closest integer approximation to square root
+-- Closest integer approximation to square root
 -- (could also compute lower bound too)
-
 intSqroot :: Int -> Int
 intSqroot i = intSqroot' 0 (rootBound i)
   where
@@ -27,15 +23,15 @@ rootBound i = if i < 100 then smallRootBound i else 10 * rootBound ((i `div` 100
   where
   smallRootBound i = length (takeWhile (i>) [d*d | d <- [0..9]])
 
-prop_intSqrootMinErr :: Nat -> Bool
-prop_intSqrootMinErr (N i) =
+prop_intSqrootMinErr :: Int -> Bool
+prop_intSqrootMinErr i =
   rdiff == minimum diffs
   where
   r     = intSqroot i
   diffs = [abs (i - j*j) | j <- [r-1 .. r+1]]
   rdiff =  abs (i - r*r)
 
-prop_rootBound :: Nat -> Bool
-prop_rootBound (N i) = rb * rb >= i
+prop_rootBound :: Int -> Bool
+prop_rootBound i = rb * rb >= i
   where
   rb = rootBound i

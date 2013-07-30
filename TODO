@@ -1,4 +1,3 @@
-IntOps.hs - Definition for Nat is a hack.
 PictureDSL - Rewrite plane_points
 RectGrid.hs - rewrite squarePoints
 
