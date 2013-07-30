@@ -30,20 +30,12 @@ surface_geom ::  [Vertex3 GLfloat] -> [Color4 GLfloat] -> HsScene
 surface_geom verts cols
     = Group static $ geom
       where
-          --verts = concat vs
           geom = [ Special $ blend      $= Disabled
-	         , Special $ depthMask  $= Enabled
-		 , Special $ render_mode Enabled 1.0 Fill
+      	         , Special $ depthMask  $= Enabled
+		             , Special $ render_mode Enabled 1.0 Fill
                  , Special $ color (head cols)
-                 --, Special $ (putStrLn ("Result "++(show $ s verts 0))) >> exitWith ExitSuccess  
-                 --, Special $ (putStrLn ("Results "++(show $ length vs) ++ " " ++ (show $ length verts)))
                  , Geometry static Triangles $ [HsGeom_nt $ normt] -- map (HsGeom_nt . normt) verts  -- 
-                 --, Geometry static Triangles $ [HsGeom_v verts] -- map (HsGeom_nt . normt) verts  -- 
                  ]
-          -- s [] acc = acc        
-          -- s (a:as) acc = s as (t a acc)
-          -- t [] acc = acc
-          -- t ((Vertex3 x _ _):ts) acc = t ts (x+acc)
           normt = map (\g -> (make_normal g, g)) . triples  $ verts
           {-# INLINE normt #-}
           triples (v1:v2:v3:vs) = (v1,v2,v3):(triples vs)
@@ -114,16 +106,6 @@ fplane _          = []
 
 plane :: Color c => [[(HsVertex, c)]] -> HsScene
 plane vs = Geometry static QuadStrip $ fplane vs 
-
-
-{-
-interleave :: ([a], [a]) -> [a]
-interleave ([],    _) = []
-interleave (a:as, bs) = a: interleave (bs, as)
-
-plane :: Color c => [[(HsVertex, c)]] -> HsScene
-plane vs = Geometry static QuadStrip $ map (HsGeom_vc . interleave) $ zip vs (tail vs)
--}
 
 planes :: Color c => [[[(HsVertex, c)]]] -> HsScene
 planes vs = (Group static $ map plane vs)
@@ -201,26 +183,7 @@ make_plane norm col vs
 -- An interactor to provide frame-by-frame control over animations.
 -- The following code provides for start/go, forward frame (>), 
 -- and backward frame (<).
-{-
-anim_control :: HsHandler HsMovie
-anim_control 
-    = Just react
-      where
-          react Timer (HsMovie True [h]  hsos) = HsMovie True (reverse $ h:hsos) []
-          react Timer (HsMovie True (h:hs) os) = HsMovie True hs (h:os)
-          react (KeyMouse (GLUT.Char 's') GLUT.Down _ _) mov = mov{playing = False}
-          react (KeyMouse (GLUT.Char 'g') GLUT.Down _ _) mov = mov{playing = True}
-          react (KeyMouse (GLUT.Char '<') GLUT.Down _ _) (HsMovie f n o) 
-              = case o of
-                  []     -> let n' = reverse n in HsMovie f [head n'] (tail n')
-                  (o:os) -> HsMovie f (o:n) os
-          react (KeyMouse (GLUT.Char '>') GLUT.Down _ _) (HsMovie f n o)
-              = case n of
-                  []     -> let o' = reverse o      in HsMovie f o' []
-                  [n1]   -> let o' = reverse (n1:o) in HsMovie f o' []
-                  (n:ns) -> HsMovie f ns (n:o)
-          react _ scenes = scenes
--}
+
 anim_control :: HsHandler (Bool, [HsScene], [HsScene])
 anim_control 
     = Just react
@@ -270,150 +233,3 @@ tri_linear cell (Vertex3 px py pz)
           w = inv_interp pz az gz
           field x = snd $ select x cell
           point x = fst $ select x cell
-
-
-{-
-
-NB need to check clash with second defn of glyph
-   also needs defn of x/y_axis copied.
-
-glyph :: Vertex3 GLfloat -> Vertex3 GLfloat -> HsScene
-glyph (Vertex3 cx cy cz) (Vertex3 dx dy dz)
-    = Group static $
-      [ Transform static $ Translate cx cy cz
-      , Transform static $ Rotate (-angB) y_axis
-      , Transform static $ Rotate (-angA) x_axis
-      , Transform static $ Scale mag mag mag
-      , Geometry static Polygon $
-                  [ HsGeom_nv n1 [p_b, p_a, apex]
-                  , HsGeom_nv n2 [p_b, p_c, apex]
-                  , HsGeom_nv n3 [p_c, p_d, apex]
-                  , HsGeom_nv n4 [p_d, p_a, apex]
-                  , HsGeom_nv n5 [p_d, p_c, p_b, p_a]
-                  ]
-      ]
-      where
-          n1 = make_normal (p_a, p_b, apex)
-          n2 = make_normal (p_b, p_c, apex)
-          n3 = make_normal (p_c, p_d, apex)
-          n4 = make_normal (p_d, p_a, apex)
-          n5 = Normal3 0.0 0.0 (-1.0)
-          apex = Vertex3 0.0 0.0 1.0
-          (Vector3 u v w) = normalise $ Vector3 dx dy dz
-          mag             = min 1.0 $ sqrt $ dx*dx + dy*dy + dz*dz
-          rad             = 0.3
-          angA = (180.0/pi) * (acos $ w/d)
-          angB = (180.0/pi) * (acos $ d)
-          d    = sqrt $ v*v + w*w
-          s     = 0.25
-          p_a   = Vertex3 ( s) ( s) 0.0
-          p_b   = Vertex3 (-s) ( s) 0.0
-          p_c   = Vertex3 (-s) (-s) 0.0
-          p_d   = Vertex3 ( s) (-s) 0.0
--}
-
----------------------------------------------------------------------
--- 6.  Hedgehog plot.  
--- NOT USED in the design contest.
--- The code in this section implements 3D hedgehog plots using both
--- oriented lines and glyphs.  We also provide two different methods
--- for deriving gradient information from a scalar field.
----------------------------------------------------------------------
-{-
-type PureData a   = Dataset Cell_8 Cell.MyVertex a
-type GeomData g a = PureData (Vertex3 g, a)
-
-type VectFunc g a = (a,a,a) -> Cell_8 (a,a,a) -> Vertex3 a
-
--- streaming a hedgehog plot, parameterised on hog function 
-hedge :: (a,a,a) -> VectFunc g a -> PureData (a,a,a) -> [Vertex3 a]
-hedge dim f (Dataset vf) = map (f dim) vf
-
--- hedgehog (UVW data, only for origin vertex in cell)
-hog, hog' :: (Floating g, Fractional a) => VectFunc g a
-hog (rngx,rngy,rngz) cell
-    = let (u,v,w) = select Cell.A cell in Vertex3 (4*u/rngx) (4*v/rngy) (4* w/rngz)
-
--- hedgehog (first derivative, across the cell)
-hog' (rngx,rngy,rngz) cell
-    = Vertex3 (4* dx/rngx) (4* dy/rngy) (4* dz/rngz)
-      where
-          dx = sum_samples uf [Cell.B, Cell.C, Cell.F, Cell.G] - sum_samples uf [Cell.A, Cell.D, Cell.E, Cell.H]
-          dy = sum_samples vf [Cell.C, Cell.D, Cell.G, Cell.H] - sum_samples vf [Cell.A, Cell.B, Cell.E, Cell.F]
-          dz = sum_samples wf [Cell.E, Cell.F, Cell.G, Cell.H] - sum_samples wf [Cell.A, Cell.B, Cell.C, Cell.D]
-          sum_samples cf ixs = sum $ map (cf.((flip select) cell)) $ ixs
-          uf = \(u,_,_) -> u
-          vf = \(_,v,_) -> v
-          wf = \(_,_,w) -> w
-
--- Find a cell center.  Vertex3 is an applicative functor, so we can 
--- simply halve the sum of diagonally opposite points!
---
-cell_center :: Cell_8 (Vertex3 GLfloat) -> Vertex3 GLfloat
-cell_center cell = fmap (*0.5) $ pure (+) <*> (select Cell.A cell) <*> (select Cell.G cell)
-
-hog_geom :: [Vertex3 GLfloat] -> [Vertex3 GLfloat] -> Color4 GLfloat -> HsScene
-hog_geom vecs centers col
-    = compile Nothing $ Group static scene
-      where
-          scene = [ Special $ color col
-                  , Geometry static Lines [HsGeom_v verts]
-                  ]
-          verts = concat $ zipWith lines vecs centers
-          lines (Vertex3 dx dy dz) (Vertex3 cx cy cz)
-                = [Vertex3 cx cy cz, Vertex3 (cx+dx) (cy+dy) (cz+dz)]
-
-
-glyph :: [Vertex3 GLfloat] -> [Vertex3 GLfloat] -> Color4 GLfloat -> HsScene
-glyph vecs centers col
-    = compile Nothing $ 
-      Group static $
-      [Special $ color col] ++ zipWith arrow vecs centers
-      where
-          y_axis = Vector3 0.0 1.0 0.0
-          x_axis = Vector3 1.0 0.0 0.0
-          arrow (Vertex3 dx dy dz) (Vertex3 cx cy cz) 
-              = Group static $
-                [ Transform static $ Translate cx cy cz
-                , Transform static $ Rotate (-angB) y_axis
-                , Transform static $ Rotate (-angA) x_axis
-                , Transform static $ Scale mag mag mag
-                , Geometry static Polygon $
-                  [ HsGeom_nv n1 [p_b, p_a, apex]
-                  , HsGeom_nv n2 [p_b, p_c, apex]
-                  , HsGeom_nv n3 [p_c, p_d, apex]
-                  , HsGeom_nv n4 [p_d, p_a, apex]
-                  , HsGeom_nv n5 [p_d, p_c, p_b, p_a]
-                  ]
-                ]
-                where
-                    n1 = make_normal (p_a, p_b, apex)
-                    n2 = make_normal (p_b, p_c, apex)
-                    n3 = make_normal (p_c, p_d, apex)
-                    n4 = make_normal (p_d, p_a, apex)
-                    n5 = Normal3 0.0 0.0 (-1.0)
-                    apex = Vertex3 0.0 0.0 1.0
-                    (Vector3 u v w) = normalise $ Vector3 dx dy dz
-                    mag             = min 1.0 $ sqrt $ dx*dx + dy*dy + dz*dz
-                    rad             = 0.3
-                    angA = (180.0/pi) * (acos $ w/d)
-                    angB = (180.0/pi) * (acos $ d)
-                    d    = sqrt $ v*v + w*w
-                    s     = 0.25
-                    p_a   = Vertex3 ( s) ( s) 0.0
-                    p_b   = Vertex3 (-s) ( s) 0.0
-                    p_c   = Vertex3 (-s) (-s) 0.0
-                    p_d   = Vertex3 ( s) (-s) 0.0
-
--- Slice the dataset to get a 2D plane, or 1D line, or 0D cell.
-slice :: Num g => (Maybe g, Maybe g, Maybe g) -> GeomData g a -> GeomData g a
-slice (x,y,z) (Dataset ds) =
-    Dataset $ (filter zdim . filter ydim . filter xdim) ds
-  where
-    dimension dim Nothing  _       = True
-    dimension dim (Just n) cell    = dim (fst $ select Cell.A cell) == n
-    xdim = dimension (\ (Vertex3 i j k)->i) x
-    ydim = dimension (\ (Vertex3 i j k)->j) y
-    zdim = dimension (\ (Vertex3 i j k)->k) z
-
--}
