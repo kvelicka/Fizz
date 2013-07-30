@@ -78,21 +78,17 @@ evalView view@(source :> picture)  =
 -- main: if compiling, you must come up with a Picture expression here
 
 main :: IO ()
-<<<<<<< HEAD
-main = do { evalView $ view3 }
-=======
-main = do { evalView $ view4 }
->>>>>>> fixing-contour
+main = do { evalView $ contour }
 
 {- The remainder of this file contains examples of picture-generating 
    expressions.  These can either be entered into the ghc command line,
    or inserted into the "main" function as above and then compiled.
 -}
 
-view = (from4 35 G) :> (Surface red (Single 2500))
-view3 = (from4 35 G) :> (Volume vis5D)
-view2 = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 D) :> (Slice reds)
-view4 = (from4 35 G) :> (Contour green (Single 2500))
+surface = (from4 35 G) :> (Surface red (Single 2500))
+volume = (from4 35 G) :> (Volume vis5D)
+slice = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 D) :> (Slice reds)
+contour = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 Mv) :> (Contour greens (Sampled 1 500 10001))
 
 {-
 radiation_anim       = Anim [ Surface red (Single 20000) (from4 t G)

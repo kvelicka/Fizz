@@ -258,7 +258,7 @@ squareGrid (xmax,ymax)
                                              (drop 1 stream)
                                              (drop (line+1) stream)
                                              (drop line stream)
-          line  = ymax + 1
+          line  = xmax + 1
           discontinuities _ [] = []
           discontinuities (i,j) (x:xs)
               | j==ymax   = []

@@ -59,17 +59,8 @@ from4 t s = astroFour t s
 
 data Picture v =  Surface Colour (Sampling v) 
                | Slice  Colour
-<<<<<<< HEAD
                | Volume Colour
-            -- | Contour Colour (Sampling v) 
-=======
-            -- | Volume Colour
                | Contour Colour (Sampling v) 
-            -- | ASurface Colour (Sampling v) 
-            --  Following take 3 data expressions, need to confirm how to convert
-            -- | Hedgehog Colour (DataExpr v) (DataExpr v) (DataExpr v)
-            -- | Scatter (DataExpr v) (DataExpr v) (DataExpr v)
->>>>>>> fixing-contour
             --   Compound expressions also disabled for now
             -- | Draw [Picture v]
             -- | Anim [Picture v]
@@ -122,8 +113,6 @@ evalPicture (source :> (Slice pal)) =
       --           Y_equals _ -> dy
       --           Z_equals _ -> dz
 
-<<<<<<< HEAD
-
 evalPicture (source :> (Volume pal)) = 
     unsafePerformIO(putStrLn $ (show (dx)) ++ " " ++ (show (dy)) ++ " " ++ (show (dz))) `seq`
     volumeGeom (dx,dy,dz) points colours
@@ -135,156 +124,19 @@ evalPicture (source :> (Volume pal)) =
           colour     = transfer pal 0.4 (minimum $ values) (maximum $ values)
           colours   :: [GL.Color4 GL.GLfloat] = map colour values
 
-=======
-{- 
-eval_picture (Contour pal levels field)
-    = Group static [geomlist]
-      where
-          -- (Use ads) = de -- eval_data env de
-          -- field = read_astro ads
-          mkgrid = cubicGrid (shape field)
-          points = mkgrid $ cubicPoints field
-          vcells = mkgrid $ field
-          t_vals = range_to_list levels
-          colour = transfer pal 1.0 1.0 (toFloat.length $ t_vals)
-          --contours = map (\t -> concat $ Algorithms.iso t vcells points) $ t_vals
-          --arr = values field
-          --surf t = concat $ isosurf t arr
-          --contours = map surf t_vals
-          contours = map (\t -> concat $ Algorithms.isosurface t (Stream . toList . values $ field)) $ t_vals
-          geomlist = contour_geom contours (map colour [1.0 .. (toFloat.length $ t_vals)])
--}
-
 -- Placeholder, needs rewriting
->>>>>>> fixing-contour
 planePoints :: Int -> Int -> Int -> [GL.Vertex3 GL.GLfloat]
 planePoints dx dy dz
   | dx == 1 = trace "dx evaluated" $ [GL.Vertex3 0.0 (realToFrac y) (realToFrac z)   | y <- [0 .. dy-1], z <- [0..dz-1]]
   | dy == 1 = trace "dy evaluated" $ [GL.Vertex3 (realToFrac x) 0.0 (realToFrac z)   | x <- [0 .. dx-1], z <- [0..dz-1]]
   | dz == 1 = trace "dz evaluated" $ [GL.Vertex3 (realToFrac x) (realToFrac y) 124.0 | y <- [0 .. dy-1], x <- [0..dx-1]]
 
-<<<<<<< HEAD
-{- 
-eval_picture (Contour pal levels field)
-    = Group static [geomlist]
-      where
-          -- (Use ads) = de -- eval_data env de
-          -- field = read_astro ads
-          mkgrid = cubicGrid (shape field)
-          points = mkgrid $ cubicPoints field
-          vcells = mkgrid $ field
-=======
 planePoints2D :: Int -> Int -> [GL.Vertex3 GL.GLfloat]
 planePoints2D dx dy
   | dx == 1 = trace "dx evaluated" $ [GL.Vertex3 0.0 (realToFrac y)  124.0 | y <- [0 .. dy-1]]
   | dy == 1 = trace "dy evaluated" $ [GL.Vertex3 (realToFrac x) 0.0  124.0 | x <- [0 .. dx-1]]
   | otherwise = trace "otherwise" $ [GL.Vertex3 (realToFrac x) (realToFrac dy)  124.0 | x <- [0 .. dx-1], dy <- [0 .. dy-1]]
 
-
-{-
-eval_picture env (Volume pal de)
-    = volume_geom dim points colours
-      where
-          field  = env -- eval_data env de
-          dim    = (dim_x env, dim_y env, dim_z env) -- field
-          points = cubicPoints field
-          colour = transfer pal 0.4 (minv field) (maxv field)
-          colours :: [GL.Color4 GL.GLfloat] = map colour (values field)
--}
-{-
-eval_picture env (Hedgehog pal deu dev dew)
-    = Geometry static GL.Lines [HsGeom_cv col verts]
-      where
-          fieldu = eval_data env deu
-          fieldv = eval_data env dev
-          fieldw = eval_data env dew
-          dim    = dimensions fieldu
-          points = cubicPoints fieldu
-          geom   = zipWith4 hogs points (values fieldu) (values fieldv) (values fieldw)
--}
-{- hedgehog (first derivative, across the cell)
-hog' (rngx,rngy,rngz) cell
-    = GL.Vertex3 (4* dx/rngx) (4* dy/rngy) (4* dz/rngz)
-      where
-          dx = sum_samples uf [Cell.B, Cell.C, Cell.F, Cell.G] - sum_samples uf [Cell.A, Cell.D, Cell.E, Cell.H]
-          dy = sum_samples vf [Cell.C, Cell.D, Cell.G, Cell.H] - sum_samples vf [Cell.A, Cell.B, Cell.E, Cell.F]
-          dz = sum_samples wf [Cell.E, Cell.F, Cell.G, Cell.H] - sum_samples wf [Cell.A, Cell.B, Cell.C, Cell.D]
-          sum_samples cf ixs = sum $ map (cf.((flip select) cell)) $ ixs
-          uf = \(u,_,_) -> u
-          vf = \(_,v,_) -> v
-          wf = \(_,_,w) -> w
-
-interpret v5d ("+v" : unm : vnm : wnm : s_ti : vals)
-    = (hog_geom geo $ colour vals) : interpret v5d (drop 4 vals)
-      where
-         geo  = hedge hog' (rng_u, rng_v, rng_w)
-                           ( {-slice (Just 20,Just 20,Nothing)-} du
-                           , {-slice (Just 20,Just 20,Nothing)-} dv
-                           , {-slice (Just 20,Just 20,Nothing)-} dw)
-         (du, gu) = dataset (fst v5d) unm ti
-         (dv, gv) = dataset (fst v5d) vnm ti
-         (dw, gw) = dataset (fst v5d) wnm ti
-
-         rng_u = range (minval gu) (maxval gu)
-         rng_v = range (minval gv) (maxval gv)
-         rng_w = range (minval gw) (maxval gw) 
--}
-{-
-eval_picture (ASurface pal levels field)
-    = Group static geomlist
-      where
-          -- (Use ads) = de -- eval_data env de
-          -- field = read_astro ads
-          -- mkgrid = cubicGrid (cell_size_3D field)
-          -- points = mkgrid $ cubicPoints field
-          -- vcells = mkgrid $ values field
->>>>>>> fixing-contour
-          t_vals = range_to_list levels
-          colour = transfer pal 1.0 1.0 (toFloat.length $ t_vals)
-          --contours = map (\t -> concat $ Algorithms.iso t vcells points) $ t_vals
-          --arr = values field
-          --surf t = concat $ isosurf t arr
-          --contours = map surf t_vals
-<<<<<<< HEAD
-          contours = map (\t -> concat $ Algorithms.isosurface t (Stream . toList . values $ field)) $ t_vals
-          geomlist = contour_geom contours (map colour [1.0 .. (toFloat.length $ t_vals)])
--}
-{-
-eval_picture env (Contour pal levels de)
-    = Group static [geometry]
-      where
-          field  = env --eval_data env de
-          plane  = slice_plane (space field)
-          mkgrid = squareGrid (cell_size_2D field plane)
-          points = mkgrid $ plane_points (space field)
-          vcells = mkgrid $ values field
-          t_vals = range_to_list levels
-          colour = transfer pal 1.0 1.0 (toFloat.length $ t_vals)
-          contours = map (\t -> concat $ Algorithms.isosurface t vcells points) $ t_vals
-          geometry = contour_geom contours (map colour [1.0 .. (toFloat.length $ t_vals)])
-=======
-          contours = map (\t -> Algorithms.isosurface t (toList $ values field) {- (values field) -}) $ t_vals
-          geomlist = zipWith surface_geom contours $ repeat (map colour [1.0 .. (toFloat.length $ t_vals)])
--}
-{-
-eval_picture (AContour pal levels field)
-    = Group static [geomlist]
-      where
-          -- (Use ads) = de -- eval_data env de
-          -- field = read_astro ads
-          -- mkgrid = cubicGrid (cell_size_3D field)
-          -- points = mkgrid $ cubicPoints field
-          -- vcells = mkgrid $ values field
-          t_vals = range_to_list levels
-          colour = transfer pal 1.0 1.0 (toFloat.length $ t_vals)
-          --contours = map (\t -> concat $ Algorithms.iso t vcells points) $ t_vals
-          --arr = values field
-          --surf t = concat $ isosurf t arr
-          --contours = map surf t_vals
-          contours = map (\t -> concat $ Algorithms.isosurface t (values field)) $ t_vals
-          geomlist = contour_geom contours (map colour [1.0 .. (toFloat.length $ t_vals)])
->>>>>>> fixing-contour
--}
 {-
 eval_picture env (Draw ps)
     = Group static $ map (eval_picture env) ps
