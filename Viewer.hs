@@ -78,7 +78,7 @@ evalView view@(source :> picture)  =
 -- main: if compiling, you must come up with a Picture expression here
 
 main :: IO ()
-main = do { evalView $ contour }
+main = do { evalView $ anim }
 
 {- The remainder of this file contains examples of picture-generating 
    expressions.  These can either be entered into the ghc command line,
@@ -86,6 +86,8 @@ main = do { evalView $ contour }
 -}
 
 surface = (from4 35 G) :> (Surface red (Single 2500))
+draw = (from4 35 G) :> Draw [(Surface red (Single 2500)), (Surface blue (Single 10000)), (Surface green (Single 15000))]
+anim = (from4 35 G) :> Anim [(Surface red (Single 2500)), (Surface blue (Single 10000)), (Surface green (Single 15000))]
 volume = (from4 35 G) :> (Volume vis5D)
 slice = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 D) :> (Slice reds)
 contour = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 Mv) :> (Contour greens (Sampled 1 500 10001))

@@ -221,7 +221,24 @@ anim_control
                   (n:ns) -> HsMovie f ns (n:o)
           react _ scenes = scenes
 -}
-
+anim_control :: HsHandler (Bool, [HsScene], [HsScene])
+anim_control 
+    = Just react
+      where
+          react Timer (True, [h], hsos) = (True, reverse (h:hsos), [])
+          react Timer (True, h:hs, os)  = (True, hs, h:os)
+          react (KeyMouse (GLUT.Char 's') GLUT.Down _ _) (_, n, o) = (False, n, o) 
+          react (KeyMouse (GLUT.Char 'g') GLUT.Down _ _) (_, n, o) = (True,  n, o) 
+          react (KeyMouse (GLUT.Char '<') GLUT.Down _ _) (f, n, o) 
+              = case o of
+                  []     -> let n' = reverse n in (f, [head n'], tail n')
+                  (o:os) -> (f, o:n, os)
+          react (KeyMouse (GLUT.Char '>') GLUT.Down _ _) (f, n, o) 
+              = case n of
+                  []     -> let o' = reverse o      in (f, o', [])
+                  [n1]   -> let o' = reverse (n1:o) in (f, o', [])
+                  (n:ns) -> (f, ns, n:o)
+          react _ scenes = scenes
 
 
 ---------------------------------------------------------------------

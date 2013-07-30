@@ -61,9 +61,8 @@ data Picture v =  Surface Colour (Sampling v)
                | Slice  Colour
                | Volume Colour
                | Contour Colour (Sampling v) 
-            --   Compound expressions also disabled for now
-            -- | Draw [Picture v]
-            -- | Anim [Picture v]
+               | Draw [Picture v]
+               | Anim [Picture v]
 
 -- View datatype combines a source with a picture description to make a generic
 -- picture type that is independent of the source
@@ -124,6 +123,12 @@ evalPicture (source :> (Volume pal)) =
           colour     = transfer pal 0.4 (minimum $ values) (maximum $ values)
           colours   :: [GL.Color4 GL.GLfloat] = map colour values
 
+evalPicture (source :> Draw ps)
+    = Group static $ map (\x -> evalPicture (source :> x) ) ps
+
+evalPicture (source :> Anim ps)
+    = Animate anim_control True (map (\x -> evalPicture (source :> x)) ps) []
+
 -- Placeholder, needs rewriting
 planePoints :: Int -> Int -> Int -> [GL.Vertex3 GL.GLfloat]
 planePoints dx dy dz
@@ -137,11 +142,4 @@ planePoints2D dx dy
   | dy == 1 = trace "dy evaluated" $ [GL.Vertex3 (realToFrac x) 0.0  124.0 | x <- [0 .. dx-1]]
   | otherwise = trace "otherwise" $ [GL.Vertex3 (realToFrac x) (realToFrac dy)  124.0 | x <- [0 .. dx-1], dy <- [0 .. dy-1]]
 
-{-
-eval_picture env (Draw ps)
-    = Group static $ map (eval_picture env) ps
--}
-{-
-eval_picture (Anim ps)
-    = Animate anim_control (HsMovie True (map eval_picture ps) [])
--}
+
