@@ -7,7 +7,7 @@ The version in this file is an attempt to convert the visualizer from a specific
 An attempt was made to make the original code more modular, but that work was not finished. This project will attempt to:
 
 1. Get the code to a state where it is running properly (done)
-2. Make the code feature-complete with the code from the paper
+2. Make the code feature-complete with the code from the paper (done)
 3. Clean the code up
 4. Put the code in loosely-coupled modules
 5. Generalize the code to accept more generic datasets (done)
