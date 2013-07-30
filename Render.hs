@@ -499,7 +499,6 @@ calibrate (Camera h view g) bounds''
 
 -- Add a scene; the scene objects are added to the top-level group
 -- directly beneath the camera.
---addScene :: IORef HsScene -> Extent -> [HsScene] -> IO()
 addScene :: IORef HsScene -> [HsScene] -> IO()
 addScene g hs = 
   do { let a = trace "extent is mapped" $ collapse $ map extent hs
@@ -581,13 +580,6 @@ openGraphics name size@(xsz,ysz) =
     kbfilter root c s m p 
         | s == Down && c == (Char '\27') = exitWith ExitSuccess
         | otherwise                      = walk root (KeyMouse c s m p)
-
-{-    kbfilter root c s m p 
-        | s == Down = if c == (Char '\27')
-                      then exitWith ExitSuccess
-                      else walk root (KeyMouse c s m p)
-        | otherwise = return()
--}
     walk root event = do { modifyIORef root (handle event)
                          ; postRedisplay Nothing
                          }
@@ -859,19 +851,3 @@ viewToDisplay v (Vertex3 x0 y0 z0)
           (sizex, sizey) = window_size v
           x' = floor $ (x0/aspect + 1.0) * ((double sizex)/2.0)
           y' = floor $ (y0/1.0    + 1.0) * ((double sizey)/2.0)
-
-{-
-viewToWorld :: HsView -> Vertex3 GLdouble -> Vertex3 GLdouble
-viewToWorld v (Vertex3 x y z) 
-    = Vertex3 (x*xs) (y*ys) (z*zs)
-      where
-          (Vertex3 lx ly lz, Vertex3 ux uy uz) = bounds v
-          (xs, ys, zs) = (double $ ux-lx, double $ uy-ly, double $ uz-lz)
-
-worldToView :: HsView -> Vertex3 GLdouble -> Vertex3 GLdouble
-worldToView v (Vertex3 x y z) 
-    = Vertex3 (x/xs) (y/ys) (z/zs)
-      where
-          (Vertex3 lx ly lz, Vertex3 ux uy uz) = bounds v
-          (xs, ys, zs) = (double $ ux-lx, double $ uy-ly, double $ uz-lz)
--}
