@@ -74,28 +74,28 @@ evalPicture (source :> (Surface pal levels)) =
   where
     field      = unsafePerformIO $ readData source
     (dx,dy,dz) = dimensions $ shape field
-    mkGrid    :: [a] -> Stream Cell_8 MyVertex a
+    mkGrid    :: [a] -> Stream Cell8 MyVertex a
     mkGrid     = cubicGrid (dx, dy, dz)
     points     = mkGrid $ cubicPoints field
     vcells     = mkGrid $ Dataset.stream field
-    t_vals     = fmap toFloat $ samplingToList levels
-    colour     = transfer pal 1.0 1.0 (genericLength $ t_vals)
-    contours   = map (\t -> concat $ Algorithms.isosurface t vcells points) $ t_vals
-    geomlist   = zipWith surface_geom contours $ repeat (map colour [1.0 .. (genericLength $ t_vals)])
+    tVals     = fmap toFloat $ samplingToList levels
+    colour     = transfer pal 1.0 1.0 (genericLength $ tVals)
+    contours   = map (\t -> concat $ Algorithms.isosurface t vcells points) $ tVals
+    geomlist   = zipWith surfaceGeom contours $ repeat (map colour [1.0 .. (genericLength $ tVals)])
 
 evalPicture (source :> (Contour pal levels)) =
   Group static [geometry]
   where
     field    = unsafePerformIO $ readData source
     (dx,dy)  = dimensions2D $ shape field
-    mkGrid  :: [a] -> Stream Cell_4 MyVertex a
-    mkGrid   = squareGrid (dx, dy)
+    mkGrid  :: [a] -> Stream Cell4 MyVertex a
+    mkGrid   = squareGrid (dx-1, dy-1)
     points   = mkGrid $ squarePoints field
     vcells   = mkGrid $ Dataset.stream field
-    t_vals   = fmap toFloat $ samplingToList levels
-    colour   = transfer pal 1.0 1.0 (genericLength $ t_vals)
-    contours = map (\t -> concat $ Algorithms.isosurface t vcells points) $ t_vals
-    geometry = contour_geom contours (map colour [1.0 .. (genericLength $ t_vals)])
+    tVals   = fmap toFloat $ samplingToList levels
+    colour   = transfer pal 1.0 1.0 (genericLength $ tVals)
+    contours = map (\t -> concat $ Algorithms.isosurface t vcells points) $ tVals
+    geometry = contourGeom contours (map colour [1.0 .. (genericLength $ tVals)])
 
 evalPicture (source :> (Slice pal)) =
   Group static $ [plane rows]
@@ -108,9 +108,9 @@ evalPicture (source :> (Slice pal)) =
     colours   :: [GL.Color4 GL.GLfloat] = map colour values
     rows       = splitInto dx {- steps -} $ zip points colours
     --steps  = case slice_plane (space field) of
-    --           X_equals _ -> dx
-    --           Y_equals _ -> dy
-    --           Z_equals _ -> dz
+    --           Xequals _ -> dx
+    --           Yequals _ -> dy
+    --           Zequals _ -> dz
 
 evalPicture (source :> (Volume pal)) = 
   volumeGeom (dx,dy,dz) points colours
@@ -126,7 +126,7 @@ evalPicture (source :> Draw ps) =
   Group static $ map (\x -> evalPicture (source :> x) ) ps
 
 evalPicture (source :> Anim ps) = 
-  Animate anim_control True (map (\x -> evalPicture (source :> x)) ps) []
+  Animate animControl True (map (\x -> evalPicture (source :> x)) ps) []
 
 -- Placeholder, needs rewriting
 planePoints :: Int -> Int -> Int -> [GL.Vertex3 GL.GLfloat]

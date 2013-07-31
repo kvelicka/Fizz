@@ -129,15 +129,15 @@ species = do satisfy (=='D'); return D
 
 
 slice :: Parser Char VisData
-slice = do satisfy (=='x'); x <- (parse_range integer)
-           satisfy (=='y'); y <- (parse_range integer)
-           satisfy (=='z'); z <- (parse_range integer)
+slice = do satisfy (=='x'); x <- (parseRange integer)
+           satisfy (=='y'); y <- (parseRange integer)
+           satisfy (=='z'); z <- (parseRange integer)
            satisfy (=='t'); t <- integer
            satisfy (=='.'); ss <- species
            return $ VisData x y z t ss
 
-parse_range :: Num a => Parser Char a -> Parser Char (Sampling a)
-parse_range p = do i <- p
+parseRange :: Num a => Parser Char a -> Parser Char (Sampling a)
+parseRange p =  do i <- p
                    (do satisfy (=='-')
                        j <- p
                        (do satisfy (=='-')

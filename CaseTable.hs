@@ -127,26 +127,26 @@ isBorder (face:faces) e@(Edge (Edge a b) (Edge c d))
                                 = all (`elem` face) [a,b,c,d]
                                   || isBorder faces e
 
-cell_table :: Eq a => PolyTope a -> [(Marking a, [Triangle a])]
-cell_table g = [(m, cell_case g m) | m <- markings g]
+cellTable :: Eq a => PolyTope a -> [(Marking a, [Triangle a])]
+cellTable g = [(m, cellCase g m) | m <- markings g]
 
-cell_case :: Eq a => PolyTope a -> Marking a -> [Triangle a]
-cell_case g@(PolyTope faces edges) m
+cellCase :: Eq a => PolyTope a -> Marking a -> [Triangle a]
+cellCase g@(PolyTope faces edges) m
     | minsize==0 = []
     | otherwise  = (head . generatorWithState minsize . incident g) m
   where
     minsize = min (length m) (length (vertices g) - length m)
 
-cell_table_verts :: Eq a => PolyTope a -> [(Marking a, [VertTriangle a])]
-cell_table_verts g = [(m, cell_case_verts g m) | m <- markings g]
+cellTableVerts :: Eq a => PolyTope a -> [(Marking a, [VertTriangle a])]
+cellTableVerts g = [(m, cellCaseVerts g m) | m <- markings g]
 
-cell_case_verts :: Eq a => PolyTope a -> Marking a -> [VertTriangle a]
-cell_case_verts g m = map (nub . concatMap verts) (cell_case g m)
+cellCaseVerts :: Eq a => PolyTope a -> Marking a -> [VertTriangle a]
+cellCaseVerts g m = map (nub . concatMap verts) (cellCase g m)
   where
     verts (Edge a b) = [a,b]
 
-cell_case_size :: Eq a => PolyTope a -> Marking a -> (Int,[Int])
-cell_case_size g@(PolyTope faces edges) m
+cellCaseSize :: Eq a => PolyTope a -> Marking a -> (Int,[Int])
+cellCaseSize g@(PolyTope faces edges) m
     | minsize==0 = (0,[])
     | otherwise  = (minsize, map length
                                  (generatorWithState minsize (incident g m)) )
@@ -154,7 +154,7 @@ cell_case_size g@(PolyTope faces edges) m
     minsize = min (length m) (length (vertices g) - length m)
 
 {-
-cell_case g@(PolyTope faces edges) m
+cellCase g@(PolyTope faces edges) m
     | null m || length m == length (vertices g) = []
     | otherwise = let start = incident g m
                   in head (concatMap (\n-> generatorWithState n start) [1..])

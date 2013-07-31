@@ -42,30 +42,30 @@ type Lookup a b = [(a, b)]
 -- Old functions that are slow but a replacement has not been written yet
 transfer :: Colour -> Float -> Float -> Float -> Float -> GL.Color4 GL.GLfloat
 transfer Vis5D _     minv maxv 
-    = transfer_f (minv, maxv)
+    = transferF (minv, maxv)
 transfer (Brewer color) alpha minv maxv 
-    = lookup_tab $ build_table (minv, maxv) (brewer color (realToFrac alpha) )
+    = lookupTab $ buildTable (minv, maxv) (brewer color (realToFrac alpha) )
 transfer (X11 names) alpha minv maxv
-    = lookup_tab $ build_table (minv, maxv) (map (x11_rgb (realToFrac alpha)) names)
+    = lookupTab $ buildTable (minv, maxv) (map (x11Rgb (realToFrac alpha)) names)
 
-lookup_tab :: (Real a, InvInterp a, Interp b) => Lookup a b -> a -> b
-lookup_tab p v 
+lookupTab :: (Real a, InvInterp a, Interp b) => Lookup a b -> a -> b
+lookupTab p v 
     = case lookup' Nothing p v of
         (Nothing,      Just c)       -> snd c
         (Just c,       Nothing)      -> snd c
-        (Just (k1,c1), Just (k2,c2)) -> interp (inv_interp v k1 k2) c1 c2
+        (Just (k1,c1), Just (k2,c2)) -> interp (invInterp v k1 k2) c1 c2
       where
         lookup' prev (e:ps) v | v <= fst e = (prev,   Just e)
                               | null ps    = (Just e, Nothing)
                               | otherwise  = lookup' (Just e) ps v
 
-build_table :: (Enum a, Fractional a) => (a,a) -> [b] -> Lookup a b
-build_table (l,u) cols = zip [l, l+step ..] cols
+buildTable :: (Enum a, Fractional a) => (a,a) -> [b] -> Lookup a b
+buildTable (l,u) cols = zip [l, l+step ..] cols
                          where step = (u - l) / realToFrac (length cols - 1)
 
 
-transfer_t :: (Real a) => (a,a) -> [GL.Color4 GL.GLfloat] -> a -> GL.Color4 GL.GLfloat
-transfer_t (l,u) ramp 
+transferT :: (Real a) => (a,a) -> [GL.Color4 GL.GLfloat] -> a -> GL.Color4 GL.GLfloat
+transferT (l,u) ramp 
     = let len = length ramp - 1
           arr = listArray (0,len) ramp
       in  \v -> let s :: Float = realToFrac (v - l) / realToFrac (u - l)
@@ -73,14 +73,14 @@ transfer_t (l,u) ramp
                     a = ceiling $ t
                     b = floor $ t
                 in if s < 0.0 || s > 1.0 
-                   then error "transfer_t: value out of range"
+                   then error "transferT: value out of range"
                    else if a == b 
                         then arr!a
                         else interp (t - toFloat b) (arr!a) (arr!b)
 
 -- Transfer function used in Vis5D
-transfer_f :: (Real a) => (a,a) -> a -> GL.Color4 GL.GLfloat
-transfer_f (l,u) v = GL.Color4 (r/256.0) (g/256.0) (b/256.0) (toFloat a/256.0)
+transferF :: (Real a) => (a,a) -> a -> GL.Color4 GL.GLfloat
+transferF (l,u) v = GL.Color4 (r/256.0) (g/256.0) (b/256.0) (toFloat a/256.0)
                    where
                        s = toFloat $ realToFrac (v - l) / realToFrac (u - l)
                        t = toFloat $ pCURVE * (s - 0.5*pBIAS)
@@ -92,18 +92,18 @@ transfer_f (l,u) v = GL.Color4 (r/256.0) (g/256.0) (b/256.0) (toFloat a/256.0)
                        pBIAS     = 1.0
                        pALPHAPOW = 2.0
 
-x11_rgb :: GL.GLfloat -> ColourName -> GL.Color4 GL.GLfloat
-x11_rgb a cn = case cn of
-                 Blue     -> to_Color4 a (  0,   0, 255)
-                 Red      -> to_Color4 a (255,   0,   0)
-                 Green    -> to_Color4 a (  0, 255,   0)
-                 Orange   -> to_Color4 a (255, 165,   0)
-                 White    -> to_Color4 a (255, 255, 255)
-                 Yellow   -> to_Color4 a (255, 255,   0)
+x11Rgb :: GL.GLfloat -> ColourName -> GL.Color4 GL.GLfloat
+x11Rgb a cn = case cn of
+                 Blue     -> toColor4 a (  0,   0, 255)
+                 Red      -> toColor4 a (255,   0,   0)
+                 Green    -> toColor4 a (  0, 255,   0)
+                 Orange   -> toColor4 a (255, 165,   0)
+                 White    -> toColor4 a (255, 255, 255)
+                 Yellow   -> toColor4 a (255, 255,   0)
 
 brewer :: Palette -> GL.GLfloat -> [GL.Color4 GL.GLfloat]
 brewer color alpha 
-    = map (to_Color4 alpha) $ 
+    = map (toColor4 alpha) $ 
       case color of
                    MReds  -> [ (0,0,0)
                              , (0,0,0)
@@ -183,8 +183,8 @@ brewer color alpha
                              , (255,255,255)
                              ]
 
-to_Color4 :: GL.GLfloat -> (Int, Int, Int) -> GL.Color4 GL.GLfloat
-to_Color4 alpha (r,g,b) = GL.Color4 (toFloat r/255.0) (toFloat g/255.0) (toFloat b/255.0) alpha
+toColor4 :: GL.GLfloat -> (Int, Int, Int) -> GL.Color4 GL.GLfloat
+toColor4 alpha (r,g,b) = GL.Color4 (toFloat r/255.0) (toFloat g/255.0) (toFloat b/255.0) alpha
 
 -- Colours for the picture DSL ----------------------------------------
 --

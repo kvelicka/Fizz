@@ -17,19 +17,19 @@ import Maths
 isosurface :: (Interp a, InvInterp a, Interp g, Cell c v, Enum v) =>
     a -> Stream c v a -> Stream c v g -> [[g]]
 isosurface th samples geom
-    = zipWith (surf_cell th) 
+    = zipWith (surfCell th) 
               (CellTypes.stream samples) 
               (CellTypes.stream geom)
 
-surf_cell :: (Interp a, InvInterp a, Interp g, Cell c v, Enum v) =>
+surfCell :: (Interp a, InvInterp a, Interp g, Cell c v, Enum v) =>
     a -> c a -> c g -> [g]
-surf_cell th sample geom
-    = map (surf_geom th sample geom) $ mc_case $ fmap (>th) sample
+surfCell th sample geom
+    = map (surfGeom th sample geom) $ mcCase $ fmap (>th) sample
 
-surf_geom :: (Interp a, InvInterp a, Interp g, Cell c v, Enum v) =>
+surfGeom :: (Interp a, InvInterp a, Interp g, Cell c v, Enum v) =>
     a -> c a -> c g -> (v,v) -> g
-surf_geom th sample geom (v0,v1)
-    = interp (inv_interp th samp_0 samp_1) geom_0 geom_1
+surfGeom th sample geom (v0,v1)
+    = interp (invInterp th samp_0 samp_1) geom_0 geom_1
       where
           samp_0 = select v0 sample
           samp_1 = select v1 sample

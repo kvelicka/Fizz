@@ -1,4 +1,4 @@
-PictureDSL - Rewrite plane_points
+PictureDSL - Rewrite planePoints
 RectGrid.hs - rewrite squarePoints
 
 Profiling:

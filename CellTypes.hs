@@ -16,7 +16,7 @@ import Maths
 class (Functor c, Enum v) => Cell c v | c -> v where
   data Facet c :: * -> *
   select   :: v  -> c a -> a
-  mc_case  :: c Bool -> [(v,v)]
+  mcCase  :: c Bool -> [(v,v)]
   
 newtype Stream c v a = Stream { stream :: [c a] }
 

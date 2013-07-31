@@ -20,13 +20,13 @@ import Dataset
 
 -- Cells in the dataset are cubes.
 
-data Cell_4 a = Cell_4 !a !a !a !a             deriving (Eq,Ord,Show)
+data Cell4 a = Cell4 !a !a !a !a             deriving (Eq,Ord,Show)
 
-data Cell_8 a = Cell_8 !a !a !a !a !a !a !a !a deriving (Eq,Ord,Show)
+data Cell8 a = Cell8 !a !a !a !a !a !a !a !a deriving (Eq,Ord,Show)
 
-instance  (Ix a) => Ix (Cell_8 a)  where
-    range ((Cell_8 l1 l2 l3 l4 l5 l6 l7 l8),(Cell_8 u1 u2 u3 u4 u5 u6 u7 u8)) =
-          [(Cell_8 i1 i2 i3 i4 i5 i6 i7 i8) 
+instance  (Ix a) => Ix (Cell8 a)  where
+    range ((Cell8 l1 l2 l3 l4 l5 l6 l7 l8),(Cell8 u1 u2 u3 u4 u5 u6 u7 u8)) =
+          [(Cell8 i1 i2 i3 i4 i5 i6 i7 i8) 
                                      | i8 <- range (l8,u8)
                                      , i7 <- range (l7,u7)
                                      , i6 <- range (l6,u6)
@@ -37,8 +37,8 @@ instance  (Ix a) => Ix (Cell_8 a)  where
                                      , i1 <- range (l1,u1) ]
 	-- Note little-endian order of the 8-tuple.
 
-    index ((Cell_8 l1 l2 l3 l4 l5 l6 l7 l8),(Cell_8 u1 u2 u3 u4 u5 u6 u7 u8))
-          (Cell_8 i1 i2 i3 i4 i5 i6 i7 i8) =
+    index ((Cell8 l1 l2 l3 l4 l5 l6 l7 l8),(Cell8 u1 u2 u3 u4 u5 u6 u7 u8))
+          (Cell8 i1 i2 i3 i4 i5 i6 i7 i8) =
        let a = index (l1,u1) i1 + rangeSize (l1,u1) * (
                 index (l2,u2) i2 + rangeSize (l2,u2) * (
                  index (l3,u3) i3 + rangeSize (l3,u3) * (
@@ -48,8 +48,8 @@ instance  (Ix a) => Ix (Cell_8 a)  where
                      index (l7,u7) i7 + rangeSize (l7,u7) * (
                       index (l8,u8) i8))))))) in a
 
-    inRange ((Cell_8 l1 l2 l3 l4 l5 l6 l7 l8),(Cell_8 u1 u2 u3 u4 u5 u6 u7 u8))
-            (Cell_8 i1 i2 i3 i4 i5 i6 i7 i8) =
+    inRange ((Cell8 l1 l2 l3 l4 l5 l6 l7 l8),(Cell8 u1 u2 u3 u4 u5 u6 u7 u8))
+            (Cell8 i1 i2 i3 i4 i5 i6 i7 i8) =
          inRange (l1,u1) i1
            && inRange (l2,u2) i2
            && inRange (l3,u3) i3
@@ -59,53 +59,53 @@ instance  (Ix a) => Ix (Cell_8 a)  where
            && inRange (l7,u7) i7
            && inRange (l8,u8) i8
 
-instance  (Ix a) => Ix (Cell_4 a)  where
-    range ((Cell_4 l1 l2 l3 l4),(Cell_4 u1 u2 u3 u4)) =
-          [(Cell_4 i1 i2 i3 i4) | i4 <- range (l4,u4)
+instance  (Ix a) => Ix (Cell4 a)  where
+    range ((Cell4 l1 l2 l3 l4),(Cell4 u1 u2 u3 u4)) =
+          [(Cell4 i1 i2 i3 i4) | i4 <- range (l4,u4)
                                 , i3 <- range (l3,u3)
                                 , i2 <- range (l2,u2)
                                 , i1 <- range (l1,u1) ]
-    index ((Cell_4 l1 l2 l3 l4),(Cell_4 u1 u2 u3 u4))
-           (Cell_4 i1 i2 i3 i4) =
+    index ((Cell4 l1 l2 l3 l4),(Cell4 u1 u2 u3 u4))
+           (Cell4 i1 i2 i3 i4) =
        index (l1,u1) i1 + rangeSize (l1,u1) * (
         index (l2,u2) i2 + rangeSize (l2,u2) * (
          index (l3,u3) i3 + rangeSize (l3,u3) * (
           index (l4,u4) i4)))
 
-    inRange ((Cell_4 l1 l2 l3 l4),(Cell_4 u1 u2 u3 u4))
-            (Cell_4 i1 i2 i3 i4) =
+    inRange ((Cell4 l1 l2 l3 l4),(Cell4 u1 u2 u3 u4))
+            (Cell4 i1 i2 i3 i4) =
          inRange (l1,u1) i1
            && inRange (l2,u2) i2
            && inRange (l3,u3) i3
            && inRange (l4,u4) i4
 
-instance Functor Cell_8 where
-  fmap f (Cell_8 v1 v2 v3 v4 v5 v6 v7 v8) 
-    = Cell_8 (f v1) (f v2) (f v3) (f v4) (f v5) (f v6) (f v7) (f v8)
+instance Functor Cell8 where
+  fmap f (Cell8 v1 v2 v3 v4 v5 v6 v7 v8) 
+    = Cell8 (f v1) (f v2) (f v3) (f v4) (f v5) (f v6) (f v7) (f v8)
 
-instance Functor Cell_4 where
-  fmap f (Cell_4 v1 v2 v3 v4) 
-    = Cell_4 (f v1) (f v2) (f v3) (f v4)
+instance Functor Cell4 where
+  fmap f (Cell4 v1 v2 v3 v4) 
+    = Cell4 (f v1) (f v2) (f v3) (f v4)
 
-instance Applicative Cell_8 where
-  pure f = Cell_8 f f f f f f f f
-  (Cell_8 f1 f2 f3 f4 f5 f6 f7 f8) <*> (Cell_8 v1 v2 v3 v4 v5 v6 v7 v8)
-    = Cell_8 (f1 v1) (f2 v2) (f3 v3) (f4 v4) (f5 v5) (f6 v6) (f7 v7) (f8 v8)
+instance Applicative Cell8 where
+  pure f = Cell8 f f f f f f f f
+  (Cell8 f1 f2 f3 f4 f5 f6 f7 f8) <*> (Cell8 v1 v2 v3 v4 v5 v6 v7 v8)
+    = Cell8 (f1 v1) (f2 v2) (f3 v3) (f4 v4) (f5 v5) (f6 v6) (f7 v7) (f8 v8)
 
-instance Applicative Cell_4 where
-  pure f = Cell_4 f f f f
-  (Cell_4 f1 f2 f3 f4) <*> (Cell_4 v1 v2 v3 v4)
-    = Cell_4 (f1 v1) (f2 v2) (f3 v3) (f4 v4)
+instance Applicative Cell4 where
+  pure f = Cell4 f f f f
+  (Cell4 f1 f2 f3 f4) <*> (Cell4 v1 v2 v3 v4)
+    = Cell4 (f1 v1) (f2 v2) (f3 v3) (f4 v4)
 
-instance (Bounded a) => Bounded (Cell_8 a) where
-  minBound = let x = minBound in Cell_8 x x x x x x x x
-  maxBound = let x = maxBound in Cell_8 x x x x x x x x
+instance (Bounded a) => Bounded (Cell8 a) where
+  minBound = let x = minBound in Cell8 x x x x x x x x
+  maxBound = let x = maxBound in Cell8 x x x x x x x x
 
-instance (Bounded a) => Bounded (Cell_4 a) where
-  minBound = let x = minBound in Cell_4 x x x x
-  maxBound = let x = maxBound in Cell_4 x x x x
+instance (Bounded a) => Bounded (Cell4 a) where
+  minBound = let x = minBound in Cell4 x x x x
+  maxBound = let x = maxBound in Cell4 x x x x
 
-instance (Enum a, Bounded a) => Enum (Cell_8 a) where
+instance (Enum a, Bounded a) => Enum (Cell8 a) where
   toEnum x = let step = 1 + fromEnum (maxBound`asTypeOf`contents)
                  (sa,a) = x  `divMod` step
                  (sb,b) = sa `divMod` step
@@ -116,9 +116,9 @@ instance (Enum a, Bounded a) => Enum (Cell_8 a) where
                  (sg,g) = sf `divMod` step
                  (sh,h) = sg `divMod` step
                  contents = toEnum a
-             in Cell_8 contents   (toEnum b) (toEnum c) (toEnum d)
+             in Cell8 contents   (toEnum b) (toEnum c) (toEnum d)
                        (toEnum e) (toEnum f) (toEnum g) (toEnum h)
-  fromEnum (Cell_8 a b c d e f g h) = 
+  fromEnum (Cell8 a b c d e f g h) = 
       let step = 1 + fromEnum (maxBound`asTypeOf`a) in
       fromEnum a + step*
        (fromEnum b + step*
@@ -129,15 +129,15 @@ instance (Enum a, Bounded a) => Enum (Cell_8 a) where
             (fromEnum g + step*
               (fromEnum h)))))))
 
-instance (Enum a, Bounded a) => Enum (Cell_4 a) where
+instance (Enum a, Bounded a) => Enum (Cell4 a) where
   toEnum x = let step = 1 + fromEnum (maxBound`asTypeOf`contents)
                  (sa,a) = x  `divMod` step
                  (sb,b) = sa `divMod` step
                  (sc,c) = sb `divMod` step
                  (sd,d) = sc `divMod` step
                  contents = toEnum a
-             in Cell_4 contents   (toEnum b) (toEnum c) (toEnum d)
-  fromEnum (Cell_4 a b c d) = 
+             in Cell4 contents   (toEnum b) (toEnum c) (toEnum d)
+  fromEnum (Cell4 a b c d) = 
       let step = 1 + fromEnum (maxBound`asTypeOf`a) in
       fromEnum a + step*
        (fromEnum b + step*
@@ -145,7 +145,7 @@ instance (Enum a, Bounded a) => Enum (Cell_4 a) where
          (fromEnum d)))
 
 
--- Make Cell_8 an instance of Cell; note the order of nodes in the vertices
+-- Make Cell8 an instance of Cell; note the order of nodes in the vertices
 -- mapping is important, and corresponds to the enumeration of the cell 
 -- vertices used by the marching cube table.
 
@@ -153,9 +153,9 @@ zipWith8 z (a:as) (b:bs) (c:cs) (d:ds) (e:es) (f:fs) (g:gs) (h:hs) =
     z a b c d e f g h : zipWith8 z as bs cs ds es fs gs hs
 zipWith8 _ _ _ _ _ _ _ _ _ = []
                                     
-instance Cell Cell_8 MyVertex where
-  data Facet Cell_8 x = FacTri x x x
-  select n (Cell_8 a b c d e f g h)
+instance Cell Cell8 MyVertex where
+  data Facet Cell8 x = FacTri x x x
+  select n (Cell8 a b c d e f g h)
     = case n of
         A  -> a
         B  -> b
@@ -165,24 +165,24 @@ instance Cell Cell_8 MyVertex where
         F  -> f
         G  -> g
         H  -> h
-  mc_case = let table = array (minBound,maxBound::Cell_8 Bool)
+  mcCase =  let table = array (minBound,maxBound::Cell8 Bool)
                               (map (\ (a,b)-> ( markingToCellBool a
                                               , concatMap (map edgeToPair) b) )
-                                   (cell_table_verts CellTypes.cube))
+                                   (cellTableVerts CellTypes.cube))
                 markingToCellBool m = let q v = v`elem`m in
-                    Cell_8 (q A) (q B) (q C) (q D) (q E) (q F) (q G) (q H)
+                    Cell8 (q A) (q B) (q C) (q D) (q E) (q F) (q G) (q H)
                 edgeToPair (Edge a b) = (a,b)
             in (table!)
 
-instance Cell Cell_4 MyVertex where
-  data Facet Cell_4 x = FacLine x x
-  select n (Cell_4 a b c d)
+instance Cell Cell4 MyVertex where
+  data Facet Cell4 x = FacLine x x
+  select n (Cell4 a b c d)
     = case n of
         A  -> a
         B  -> b
         C  -> c
         D  -> d
-  mc_case = let table = listArray (Cell_4 False False False False, Cell_4 True True True True) $
+  mcCase = let table = listArray (Cell4 False False False False, Cell4 True True True True) $
                         [ {- F, F, F, F -} []
                         , {- T, F, F, F -} [(A,B), (A,D)]
                         , {- F, T, F, F -} [(A,B), (B,C)]
@@ -205,7 +205,7 @@ instance Cell Cell_4 MyVertex where
 -- Generate a dataset consisting of the coordinates in a (xsz x ysz x zsz)-cube.
 -- Note that the origin of the cube is (0,0,0), and that the components refer
 -- to the number of CELLS along each dimension.
-cubicGeom :: (Floating a) => FizzData DIM3 v -> Stream Cell_8 MyVertex (Vertex3 a)
+cubicGeom :: (Floating a) => FizzData DIM3 v -> Stream Cell8 MyVertex (Vertex3 a)
 cubicGeom f 
     = cubicGrid (dimensions $ shape f) $ (cubicPoints f)
 
@@ -228,11 +228,11 @@ squarePoints g = [ Vertex3 (fromIntegral i) (fromIntegral j) 124
 -- cube where the components here refer to the size of a dimension 
 -- in POINTs.
 
-cubicGrid :: (Int,Int,Int) -> [a] -> Stream Cell_8 MyVertex a
+cubicGrid :: (Int,Int,Int) -> [a] -> Stream Cell8 MyVertex a
 cubicGrid (xmax,ymax,zmax) 
     = Stream . (discontinuities (0,0,0)) . zipCube
       where
-          zipCube stream = zipWith8 Cell_8 stream
+          zipCube stream = zipWith8 Cell8 stream
                                            (drop 1 stream)
                                            (drop (line+1) stream)
                                            (drop line stream)
@@ -250,11 +250,11 @@ cubicGrid (xmax,ymax,zmax)
               | i==(xmax-1)   =    discontinuities (0,j+1,k) xs
               | otherwise     = x: discontinuities (i+1,j,k) xs
 
-squareGrid :: (Int, Int) -> [a] -> Stream Cell_4 MyVertex a
+squareGrid :: (Int, Int) -> [a] -> Stream Cell4 MyVertex a
 squareGrid (xmax,ymax) 
     = Stream . (discontinuities (0,0)) . zipSquare
       where
-          zipSquare stream = zipWith4 Cell_4 stream
+          zipSquare stream = zipWith4 Cell4 stream
                                              (drop 1 stream)
                                              (drop (line+1) stream)
                                              (drop line stream)

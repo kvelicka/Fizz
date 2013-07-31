@@ -24,7 +24,7 @@ module Render
         , render
         , addScene
 	, openGraphics
-	, make_normal
+	, makeNormal
         , bbox
         , cross
         , vcross
@@ -89,13 +89,13 @@ type Extent = (Vertex3 GLfloat, Vertex3 GLfloat)
 -- patterns of geometric specification, e.g. a list of
 -- vertices, of vertices and normals (one normal per vertex)
 -- etc.
-data HsGeom = HsGeom_v  [HsVertex]
-            | HsGeom_vn [(HsVertex, HsNormal)]
-            | forall c . Color c => HsGeom_vc [(HsVertex, c)]
-            | HsGeom_nv HsNormal [HsVertex]
-            | forall c . Color c => HsGeom_cv c [HsVertex]
-            | forall c . Color c => HsGeom_cnv c [(HsVertex, HsNormal)]
-            | HsGeom_nt [(HsNormal, (HsVertex, HsVertex, HsVertex))]
+data HsGeom = HsGeomV  [HsVertex]
+            | HsGeomVn [(HsVertex, HsNormal)]
+            | forall c . Color c => Cell4c [(HsVertex, c)]
+            | HsGeomNv HsNormal [HsVertex]
+            | forall c . Color c => HsGeomCv c [HsVertex]
+            | forall c . Color c => HsGeomCnv c [(HsVertex, HsNormal)]
+            | HsGeomNt [(HsNormal, (HsVertex, HsVertex, HsVertex))]
 
 data HsView = HsView 
                  { window_size  :: (Int, Int)
@@ -340,13 +340,13 @@ render (Special act)        = act
 render (Animate _ _ (s:_) _)  = render s
 
 process :: HsGeom -> IO()
-process (HsGeom_v vs)      = mapM_ vertex vs
-process (HsGeom_vn vns)    = mapM_ (\(v,n) -> normal n >> vertex v) vns 
-process (HsGeom_vc vcs)    = mapM_ (\(v,c) -> color c  >> vertex v) vcs
-process (HsGeom_nv n vs)   = normal n >> mapM_ vertex vs
-process (HsGeom_cnv c vns) = color c >> (mapM_ (\(v,n) -> normal n >> vertex v) vns)
-process (HsGeom_cv c vs)   = color c >> mapM_ vertex vs
-process (HsGeom_nt nts)    = mapM_ tri nts
+process (HsGeomV vs)      = mapM_ vertex vs
+process (HsGeomVn vns)    = mapM_ (\(v,n) -> normal n >> vertex v) vns 
+process (Cell4c vcs)    = mapM_ (\(v,c) -> color c  >> vertex v) vcs
+process (HsGeomNv n vs)   = normal n >> mapM_ vertex vs
+process (HsGeomCnv c vns) = color c >> (mapM_ (\(v,n) -> normal n >> vertex v) vns)
+process (HsGeomCv c vs)   = color c >> mapM_ vertex vs
+process (HsGeomNt nts)    = mapM_ tri nts
                              where
                                 tri (n,(v1,v2,v3)) = normal n >> vertex v1 >> vertex v2 >> vertex v3
 
@@ -372,54 +372,54 @@ compile cb scene = unsafePerformIO $
 -- Functions are defined for finding minima and maxima of pairs
 -- and lists of vertices.
 
-vert_max :: Vertex3 GLfloat = Vertex3   1.0e20    1.0e20    1.0e20
-vert_min :: Vertex3 GLfloat = Vertex3 (-1.0e20) (-1.0e20) (-1.0e20)
+vertMax :: Vertex3 GLfloat = Vertex3   1.0e20    1.0e20    1.0e20
+vertMin :: Vertex3 GLfloat = Vertex3 (-1.0e20) (-1.0e20) (-1.0e20)
 
-vert_lower :: Ord a => Vertex3 a -> Vertex3 a -> Vertex3 a
-vert_lower (Vertex3 x1 y1 z1) (Vertex3 x2 y2 z2) 
+vertLower :: Ord a => Vertex3 a -> Vertex3 a -> Vertex3 a
+vertLower (Vertex3 x1 y1 z1) (Vertex3 x2 y2 z2) 
     = Vertex3 (min x1 x2) (min y1 y2) (min z1 z2)
 
-vert_upper :: Ord a => Vertex3 a -> Vertex3 a -> Vertex3 a
-vert_upper (Vertex3 x1 y1 z1) (Vertex3 x2 y2 z2)
+vertUpper :: Ord a => Vertex3 a -> Vertex3 a -> Vertex3 a
+vertUpper (Vertex3 x1 y1 z1) (Vertex3 x2 y2 z2)
     = Vertex3 (max x1 x2) (max y1 y2) (max z1 z2)
 
-vert_lbound :: [Vertex3 GLfloat] -> Vertex3 GLfloat
-vert_lbound = foldr vert_lower vert_max
+vertLbound :: [Vertex3 GLfloat] -> Vertex3 GLfloat
+vertLbound = foldr vertLower vertMax
 
-vert_ubound :: [Vertex3 GLfloat] -> Vertex3 GLfloat
-vert_ubound = foldr vert_upper vert_min
+vertUbound :: [Vertex3 GLfloat] -> Vertex3 GLfloat
+vertUbound = foldr vertUpper vertMin
 
-vert_extent :: [Vertex3 GLfloat] -> Extent
-vert_extent vs = foldr comp (vert_max, vert_min) vs
+vertExtent :: [Vertex3 GLfloat] -> Extent
+vertExtent vs = foldr comp (vertMax, vertMin) vs
                  where
-                     comp v (minv, maxv) = (vert_lower v minv, vert_upper v maxv)
+                     comp v (minv, maxv) = (vertLower v minv, vertUpper v maxv)
 
 collapse :: [Extent] -> Extent
 collapse es 
-    = let (mins, maxs) = unzip es in (vert_lbound mins, vert_ubound maxs)
+    = let (mins, maxs) = unzip es in (vertLbound mins, vertUbound maxs)
 
 -- Compute the extent of a scene.  Note that for a compiled scene,
 -- we compute and store the extent at the time the scene is compiled.
 extent :: HsScene -> Extent
 extent (Camera _ _ scene) =   extent scene
-extent (Geometry _ _ gs)  =   collapse $ map g_extent gs
-extent (Transform _ t)    =   (vert_max, vert_min)
+extent (Geometry _ _ gs)  =   collapse $ map gExtent gs
+extent (Transform _ t)    =   (vertMax, vertMin)
 extent (Group _ gs)       =   collapse $ map extent gs
 extent (Compiled _ ex _)  =   ex
-extent (Special act)      =   (vert_max, vert_min)
+extent (Special act)      =   (vertMax, vertMin)
 extent (Imposter st dy)   =   collapse [extent st, extent dy]
 extent (Switch sx sy sz)  =   collapse $ map extent [sx, sy, sz]
 extent (Animate _ _ (s:_) _)= extent s
 
 
-g_extent :: HsGeom -> Extent
-g_extent (HsGeom_v vs)      = vert_extent vs
-g_extent (HsGeom_vn vns)    = vert_extent (map fst vns)
-g_extent (HsGeom_vc vcs)    = vert_extent (map fst vcs)
-g_extent (HsGeom_nv _ vs)   = vert_extent vs
-g_extent (HsGeom_cv _ vs)   = vert_extent vs
-g_extent (HsGeom_cnv _ vns) = vert_extent (map fst vns)
-g_extent (HsGeom_nt nvvvs)  = vert_extent (concat $ map (\(_, (v1,v2,v3)) -> [v1,v2,v3]) nvvvs)
+gExtent :: HsGeom -> Extent
+gExtent (HsGeomV vs)      = vertExtent vs
+gExtent (HsGeomVn vns)    = vertExtent (map fst vns)
+gExtent (Cell4c vcs)    = vertExtent (map fst vcs)
+gExtent (HsGeomNv _ vs)   = vertExtent vs
+gExtent (HsGeomCv _ vs)   = vertExtent vs
+gExtent (HsGeomCnv _ vns) = vertExtent (map fst vns)
+gExtent (HsGeomNt nvvvs)  = vertExtent (concat $ map (\(_, (v1,v2,v3)) -> [v1,v2,v3]) nvvvs)
 
 
 -- Event Handling ------------------------------------------------
@@ -554,7 +554,7 @@ openGraphics name size@(xsz,ysz) =
      ; let view = HsView { window_size = size
                          , aspect_ratio = (double xsz)/(double ysz)
                          , last_event  = (0,0)
-                         , bounds      = (vert_max, vert_min)
+                         , bounds      = (vertMax, vertMin)
                          , eye   = Vertex3 30.0 30.0 30.0
                          , cop   = Vertex3 0.0 0.0 0.0
                          , vup   = Vector3 0.0 1.0 0.0
@@ -589,11 +589,11 @@ openGraphics name size@(xsz,ysz) =
 -- Utility functions ---------------------------------------------
 --
 -- Final two functions should probably be part of a rendering utilities
--- package built on top of this module.  "make_normal" constructs a normal
+-- package built on top of this module.  "makeNormal" constructs a normal
 -- to a plane defined by three points, "bbox" constructs a bounding box.
 
-make_normal :: (Vertex3 GLfloat, Vertex3 GLfloat, Vertex3 GLfloat) -> Normal3 GLfloat
-make_normal (p1, p2, p3) = let (Vertex3 x1 y1 z1) = p1
+makeNormal :: (Vertex3 GLfloat, Vertex3 GLfloat, Vertex3 GLfloat) -> Normal3 GLfloat
+makeNormal (p1, p2, p3)  = let (Vertex3 x1 y1 z1) = p1
                                (Vertex3 x2 y2 z2) = p2
                                (Vertex3 x3 y3 z3) = p3
                                ax = x2 - x1
@@ -610,7 +610,7 @@ make_normal (p1, p2, p3) = let (Vertex3 x1 y1 z1) = p1
 
 bbox :: (Enum a) => a -> a -> a -> HsScene
 bbox ln wd ht = Geometry static Lines $
-                [ HsGeom_cv (Color3 0.0 1.0 0.0 :: Color3 GLfloat) 
+                [ HsGeomCv (Color3 0.0 1.0 0.0 :: Color3 GLfloat) 
                            [ ftl, ftr
                            , fbl, fbr
                            , ftl, fbl

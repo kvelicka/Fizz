@@ -26,11 +26,11 @@ fromSample (Sample s) = FP m e
     e32 :: Int32 = fromIntegral $ s
     e = fromIntegral $ e32 `shiftR` 16
 
-prop_sample :: FixedPrecision -> Bool
-prop_sample fp = fp == (fromSample $ toSample fp)
+propSample :: FixedPrecision -> Bool
+propSample fp = fp == (fromSample $ toSample fp)
 
-prop_fp_float :: FixedPrecision -> Bool
-prop_fp_float fp =
+propFpFloat :: FixedPrecision -> Bool
+propFpFloat fp =
     let lhs :: Float = ((fromIntegral $ mantissa fp) * 10.0 ^^ (exponent fp))
     in lhs == (fromRational.toRational $ fp)
 

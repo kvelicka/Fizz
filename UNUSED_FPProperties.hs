@@ -13,65 +13,64 @@ instance Serial FixedPrecision where
 
 -- Properties of operations on FixedPrecision values.
 
-prop_norm :: FixedPrecision -> Bool
-prop_norm x = normaliseFP x == x
+propNorm :: FixedPrecision -> Bool
+propNorm x = normaliseFP x == x
 
-prop_ordReflexive :: FixedPrecision -> Bool
-prop_ordReflexive x = x <= x
+propOrdReflexive :: FixedPrecision -> Bool
+propOrdReflexive x = x <= x
 
-prop_ordAntisymmetric :: FixedPrecision -> FixedPrecision -> Property
-prop_ordAntisymmetric x y = x <= y && y <= x ==> x == y
+propOrdAntisymmetric :: FixedPrecision -> FixedPrecision -> Property
+propOrdAntisymmetric x y = x <= y && y <= x ==> x == y
 
-prop_ordTransitive :: FixedPrecision -> FixedPrecision -> FixedPrecision -> Property
-prop_ordTransitive x y z = x <= y && y <= z ==> x <= z
+propOrdTransitive :: FixedPrecision -> FixedPrecision -> FixedPrecision -> Property
+propOrdTransitive x y z = x <= y && y <= z ==> x <= z
 
-prop_eqReflexive :: FixedPrecision -> Bool
-prop_eqReflexive x = x == x
+propEqReflexive :: FixedPrecision -> Bool
+propEqReflexive x = x == x
 
-prop_eqSymmetric :: FixedPrecision -> FixedPrecision -> Property
-prop_eqSymmetric x y = x == y ==> y == x
+propEqSymmetric :: FixedPrecision -> FixedPrecision -> Property
+propEqSymmetric x y = x == y ==> y == x
 
-prop_eqTransitive :: FixedPrecision -> FixedPrecision -> FixedPrecision -> Property
-prop_eqTransitive x y z = x == y && y == z ==> x == z
+propEqTransitive :: FixedPrecision -> FixedPrecision -> FixedPrecision -> Property
+propEqTransitive x y z = x == y && y == z ==> x == z
 
-prop_plusZero :: FixedPrecision -> Bool
-prop_plusZero x = x + 0 == x
+propPlusZero :: FixedPrecision -> Bool
+propPlusZero x = x + 0 == x
 
-prop_plusCommutes :: FixedPrecision -> FixedPrecision -> Bool
-prop_plusCommutes x y = x + y == y + x
+propPlusCommutes :: FixedPrecision -> FixedPrecision -> Bool
+propPlusCommutes x y = x + y == y + x
 
-prop_timesZero :: FixedPrecision -> Bool
-prop_timesZero x = x * 0 == 0
+propTimesZero x = x * 0 == 0
 
-prop_timesOne :: FixedPrecision -> Bool
-prop_timesOne x = x * 1 == x
+propTimesOne :: FixedPrecision -> Bool
+propTimesOne x = x * 1 == x
 
-prop_timesCommutes :: FixedPrecision -> FixedPrecision -> Bool
-prop_timesCommutes x y = x * y == y * x
+propTimesCommutes :: FixedPrecision -> FixedPrecision -> Bool
+propTimesCommutes x y = x * y == y * x
 
-prop_doubleAdd :: FixedPrecision -> Bool
-prop_doubleAdd x = x + x == 2 * x
+propDoubleAdd :: FixedPrecision -> Bool
+propDoubleAdd x = x + x == 2 * x
 
-prop_distrib :: FixedPrecision -> FixedPrecision -> FixedPrecision -> Bool
-prop_distrib x y z = x * (y + z) == (x*y) + (x*z)
+propDistrib :: FixedPrecision -> FixedPrecision -> FixedPrecision -> Bool
+propDistrib x y z = x * (y + z) == (x*y) + (x*z)
 
-prop_negatePlus :: FixedPrecision -> FixedPrecision -> Bool
-prop_negatePlus x y = negate (x + y) == negate x + negate y
+propNegatePlus :: FixedPrecision -> FixedPrecision -> Bool
+propNegatePlus x y = negate (x + y) == negate x + negate y
 
-prop_negateMinus :: FixedPrecision -> FixedPrecision -> Bool
-prop_negateMinus x y = negate (x - y) == y - x
+propNegateMinus :: FixedPrecision -> FixedPrecision -> Bool
+propNegateMinus x y = negate (x - y) == y - x
 
-prop_plusMinus :: FixedPrecision -> FixedPrecision -> Bool
-prop_plusMinus x y = (x + y) - y == x
+propPlusMinus :: FixedPrecision -> FixedPrecision -> Bool
+propPlusMinus x y = (x + y) - y == x
 
-prop_recipDivide :: FixedPrecision -> FixedPrecision -> Property
-prop_recipDivide x y = x /= 0 && y /= 0 ==> recip (x / y) == y / x
+propRecipDivide :: FixedPrecision -> FixedPrecision -> Property
+propRecipDivide x y = x /= 0 && y /= 0 ==> recip (x / y) == y / x
 
-prop_timesDivide :: FixedPrecision -> FixedPrecision -> Property
-prop_timesDivide x y = y /= 0 ==> (x * y) / y == x
+propTimesDivide :: FixedPrecision -> FixedPrecision -> Property
+propTimesDivide x y = y /= 0 ==> (x * y) / y == x
 
-prop_sqrootMinErr :: FixedPrecision -> Property
-prop_sqrootMinErr x = x >= 0 ==> rdiff == minimum diffs
+propSqrootMinErr :: FixedPrecision -> Property
+propSqrootMinErr x = x >= 0 ==> rdiff == minimum diffs
   where
   (FP rm re) = sqroot x
   diffs = [abs (x - y*y) | rm' <- [rm-1 .. rm+1], 0<=rm', rm'<=9999,
@@ -80,43 +79,43 @@ prop_sqrootMinErr x = x >= 0 ==> rdiff == minimum diffs
 
 testFixedPrecision d = do
   putStrLn "norm"
-  depthCheck d prop_norm
+  depthCheck d propNorm
   putStrLn "ordReflexive"
-  depthCheck d prop_ordReflexive
+  depthCheck d propOrdReflexive
   putStrLn "ordAntisymmetric"
-  depthCheck d prop_ordAntisymmetric
+  depthCheck d propOrdAntisymmetric
   putStrLn "ordTransitive"
-  depthCheck (d-1) prop_ordTransitive
+  depthCheck (d-1) propOrdTransitive
   putStrLn "eqReflexive"
-  depthCheck d prop_eqReflexive
+  depthCheck d propEqReflexive
   putStrLn "eqSymmetric"
-  depthCheck d prop_eqSymmetric
+  depthCheck d propEqSymmetric
   putStrLn "eqTransitive"
-  depthCheck (d-1) prop_eqTransitive
+  depthCheck (d-1) propEqTransitive
   putStrLn "plusZero"
-  depthCheck d prop_plusZero
+  depthCheck d propPlusZero
   putStrLn "plusCommutes"
-  depthCheck d prop_plusCommutes
+  depthCheck d propPlusCommutes
   putStrLn "timesZero"
-  depthCheck d prop_timesZero
+  depthCheck d propTimesZero
   putStrLn "timesOne"
-  depthCheck d prop_timesOne
+  depthCheck d propTimesOne
   putStrLn "timesCommutes"
-  depthCheck d prop_timesCommutes
+  depthCheck d propTimesCommutes
   putStrLn "doubleAdd"
-  depthCheck d prop_doubleAdd
+  depthCheck d propDoubleAdd
   putStrLn "negatePlus"
-  depthCheck d prop_negatePlus
+  depthCheck d propNegatePlus
   putStrLn "negateMinus"
-  depthCheck d prop_negateMinus
+  depthCheck d propNegateMinus
   putStrLn "plusMinus"
-  depthCheck d prop_plusMinus
+  depthCheck d propPlusMinus
   putStrLn "recipDivide"
-  depthCheck d prop_recipDivide
+  depthCheck d propRecipDivide
   putStrLn "timesDivide"
-  depthCheck d prop_timesDivide
+  depthCheck d propTimesDivide
   putStrLn "sqrootSquare"
-  depthCheck d prop_sqrootMinErr
+  depthCheck d propSqrootMinErr
 
 -- Correspondence between CFP and FixedPrecision
 
@@ -126,29 +125,29 @@ toCFP fp = sampleOf (fromIntegral $ mantissa fp) (fromIntegral $ exponent fp)
 fromCFP :: CFP -> FixedPrecision
 fromCFP cfp = FP (fromIntegral $ fixedMan cfp) (fromIntegral $ fixedExp cfp)
 
-prop_toFrom :: FixedPrecision -> Bool
-prop_toFrom x = fromCFP (toCFP x) == x
+propToFrom :: FixedPrecision -> Bool
+propToFrom x = fromCFP (toCFP x) == x
 
 lift2 :: (CFP -> CFP -> CFP) -> FixedPrecision -> FixedPrecision -> FixedPrecision
 lift2 op x y = fromCFP (toCFP x `op` toCFP y)
 
-prop_plus :: FixedPrecision -> FixedPrecision -> Bool
-prop_plus x y = (x + y) == fromCFP (toCFP x + toCFP y)
+propPlus :: FixedPrecision -> FixedPrecision -> Bool
+propPlus x y = (x + y) == fromCFP (toCFP x + toCFP y)
 
-prop_minus :: FixedPrecision -> FixedPrecision -> Bool
-prop_minus x y = (x - y) == fromCFP (toCFP x - toCFP y)
+propMinus :: FixedPrecision -> FixedPrecision -> Bool
+propMinus x y = (x - y) == fromCFP (toCFP x - toCFP y)
 
-prop_times :: FixedPrecision -> FixedPrecision -> Bool
-prop_times x y = (x * y) == fromCFP (toCFP x * toCFP y)
+propTimes :: FixedPrecision -> FixedPrecision -> Bool
+propTimes x y = (x * y) == fromCFP (toCFP x * toCFP y)
 
-prop_divide :: FixedPrecision -> FixedPrecision -> Property
-prop_divide x y = y /= 0 ==> (x / y) == fromCFP (toCFP x / toCFP y)
+propDivide :: FixedPrecision -> FixedPrecision -> Property
+propDivide x y = y /= 0 ==> (x / y) == fromCFP (toCFP x / toCFP y)
 
-prop_recip :: FixedPrecision -> Property
-prop_recip x = x /= 0 ==> recip x == fromCFP (fixedPrecRecip (toCFP x))
+propRecip :: FixedPrecision -> Property
+propRecip x = x /= 0 ==> recip x == fromCFP (fixedPrecRecip (toCFP x))
 
-prop_sqroot :: FixedPrecision -> Property
-prop_sqroot x = x >= 0 ==> sqroot x == fromCFP (fixedPrecSqroot (toCFP x))
+propSqroot :: FixedPrecision -> Property
+propSqroot x = x >= 0 ==> sqroot x == fromCFP (fixedPrecSqroot (toCFP x))
 
-prop_intSqroot :: Int -> Property
-prop_intSqroot n = n >= 0 ==> intSqrootC n == intSqroot n
+propIntSqroot :: Int -> Property
+propIntSqroot n = n >= 0 ==> intSqrootC n == intSqroot n

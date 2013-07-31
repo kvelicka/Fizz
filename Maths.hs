@@ -21,7 +21,7 @@ class Interp b where
   interp :: Float -> b -> b -> b
 
 class Real b => InvInterp b where
-  inv_interp :: b -> b -> b -> Float
+  invInterp :: b -> b -> b -> Float
 
 instance Interp Float where
   interp t v1 v2 = (1-t)*v1 + t*v2
@@ -36,13 +36,13 @@ instance Interp Word8 where
   interp t v1 v2 = toEnum.fromEnum.round $ (1-t)*(toFloat v1) + t*(toFloat v2)
 
 instance InvInterp Float where
-  inv_interp s v1 v2 = (s - v1) / (v2 - v1)
+  invInterp s v1 v2 = (s - v1) / (v2 - v1)
 
 instance InvInterp Double where
-  inv_interp s v1 v2 = realToFrac $ (s - v1) / (v2 - v1)
+  invInterp s v1 v2 = realToFrac $ (s - v1) / (v2 - v1)
 
 instance InvInterp Word8 where
-  inv_interp s v1 v2 = toFloat (s - v1) / (toFloat (v2 - v1))
+  invInterp s v1 v2 = toFloat (s - v1) / (toFloat (v2 - v1))
 
 instance (Interp a, Applicative f) => Interp (f a) where
   interp t x y = pure (interp t) <*> x <*> y

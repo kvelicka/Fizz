@@ -349,7 +349,7 @@ Nothing  `orElse` v = v
 -- Given a V5D file, a grid name, and a time, return a regular cubic
 -- grid containing the V5D data extracted from file then decompressed.
 
--- type V5Ddata = Cells Cell_8 Cell.MyVertex Float
+-- type V5Ddata = Cells Cell8 Cell.MyVertex Float
 type V5Ddata = [Float]
 
 -- Constant used in V5D to represent missing data; currently
