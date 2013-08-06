@@ -309,6 +309,7 @@ render (Camera _ view scene)  = do { clear [DepthBuffer, ColorBuffer]
                                --  ; position (Light 0) $= Vertex4 (f x) (f y) (f z) 1.0
                                    ; position (Light 0) $= Vertex4 1.0 1.0 1.0 0.0
                                    ; render scene
+                                   ; exitWith ExitSuccess
                                    ; swapBuffers
                                    ; flush
                                    }
