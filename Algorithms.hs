@@ -3,6 +3,7 @@
 module Algorithms (isosurface) where
 
 import Control.Applicative
+import Control.Parallel.Strategies
 
 import CellTypes
 import Dataset
@@ -17,13 +18,15 @@ import Maths
 isosurface :: (Interp a, InvInterp a, Interp g, Cell c v, Enum v) =>
     a -> Stream c v a -> Stream c v g -> [[g]]
 isosurface th samples geom
-    = zipWith (surfCell th) 
-              (CellTypes.stream samples) 
-              (CellTypes.stream geom)
+    = parMap (parListChunk 8192 rpar) (surfCell th) $
+              zip (CellTypes.stream samples) (CellTypes.stream geom)
+--    = zipWith (surfCell th) 
+--              (CellTypes.stream samples) 
+--              (CellTypes.stream geom)
 
 surfCell :: (Interp a, InvInterp a, Interp g, Cell c v, Enum v) =>
-    a -> c a -> c g -> [g]
-surfCell th sample geom
+    a -> (c a, c g) -> [g]
+surfCell th (sample, geom)
     = map (surfGeom th sample geom) $ mcCase $ fmap (>th) sample
 
 surfGeom :: (Interp a, InvInterp a, Interp g, Cell c v, Enum v) =>
