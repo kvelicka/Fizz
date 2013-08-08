@@ -39,6 +39,7 @@ bytesToSamples bs
     | BS.null bs   = []
     | otherwise      = (Sample s):bytesToSamples post
                        where
+                           -- INEFFICIENT
                            (pre,post) = BS.splitAt 4 bs
                            [a,b,c,d]  = BS.unpack pre
                            s = (a32 .|. b32 .|. c32 .|. d32)

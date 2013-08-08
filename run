@@ -20,7 +20,7 @@ WRITE=false
 if [ "$1" = "r" ]
 then
     MAKESTRING="ghc Viewer.hs -O2 -rtsopts -threaded"
-    RUNSTRING="../Viewer +RTS -s"
+    RUNSTRING="../Viewer +RTS -s -K100M"
 elif [ "$1" = "t" ]
 then
     MAKESTRING="ghc Viewer.hs"
@@ -49,7 +49,7 @@ else
     exit
 fi
 
-if [ $3 -lt 4 ] && [ $3 -ge 1 ]
+if [ $3 -le 4 ] && [ $3 -ge 1 ]
 then
     RUNSTRING=$RUNSTRING" -N"$3
     FILENAME=$FILENAME"_"$3
@@ -58,7 +58,7 @@ else
     exit
 fi
 
-if [ "$4" = w ]
+if [ -n "$4" ]
 then
     FILENAME=$FILENAME"_"$4
     WRITE=true

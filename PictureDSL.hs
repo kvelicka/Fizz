@@ -1,4 +1,4 @@
-{-# LANGUAGE ExistentialQuantification, ScopedTypeVariables,FlexibleContexts, TypeFamilies #-}
+{-# LANGUAGE ExistentialQuantification, ScopedTypeVariables,FlexibleContexts, TypeFamilies, BangPatterns #-}
 
 {- The picture DSL.
 
@@ -11,6 +11,7 @@
 module PictureDSL where
 
 import Control.Applicative
+import Control.Parallel.Strategies
 import Data.List (genericLength)
 import Debug.Trace (trace)
 import Prelude hiding (lookup)
@@ -78,7 +79,7 @@ evalPicture (source :> (Surface pal levels)) =
     mkGrid     = cubicGrid (dx, dy, dz)
     points     = mkGrid $ cubicPoints field
     vcells     = mkGrid $ Dataset.stream field
-    tVals     = fmap toFloat $ samplingToList levels
+    tVals      = fmap toFloat $ samplingToList levels
     colour     = transfer pal 1.0 1.0 (genericLength $ tVals)
     contours   = map (\t -> concat $ Algorithms.isosurface t vcells points) $ tVals
     geomlist   = zipWith surfaceGeom contours $ repeat (map colour [1.0 .. (genericLength $ tVals)])
@@ -92,7 +93,7 @@ evalPicture (source :> (Contour pal levels)) =
     mkGrid   = squareGrid (dx-1, dy-1)
     points   = mkGrid $ squarePoints field
     vcells   = mkGrid $ Dataset.stream field
-    tVals   = fmap toFloat $ samplingToList levels
+    tVals    = fmap toFloat $ samplingToList levels
     colour   = transfer pal 1.0 1.0 (genericLength $ tVals)
     contours = map (\t -> concat $ Algorithms.isosurface t vcells points) $ tVals
     geometry = contourGeom contours (map colour [1.0 .. (genericLength $ tVals)])

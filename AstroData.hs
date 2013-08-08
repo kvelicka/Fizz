@@ -7,6 +7,7 @@
 
 module AstroData where
 
+import Control.Parallel.Strategies
 import Data.Bits
 import Data.Char
 import Data.Maybe
@@ -170,7 +171,7 @@ readAstroData d
                      (zsampling d)
          ; h <- openFile (basename ++ ".dat") ReadMode 
          ; b <- BS.hGetContents h
-         ; let vs = bytesToFloats b
-         ; return $ FizzData basename dim b $ vs
+         ; let !vs = bytesToFloats b`using` (evalList rseq)
+         ; return $ FizzData basename dim b $  vs
          }
   
