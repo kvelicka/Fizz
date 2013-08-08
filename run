@@ -26,8 +26,15 @@ then
     MAKESTRING="ghc Viewer.hs"
     eval $MAKESTRING
     exit
+elif [ "$1" = "h" ]
+then
+    eval "ghc Viewer.hs -O2 -rtsopts -threaded -prof -fprof-auto"
+    cd data
+    eval "../Viewer +RTS -s -K100M -p -h"$2
+    eval "hp2ps -c Viewer.hp; cd .."
+    exit
 else
-    echo "ERROR: Looks like argument 1 is wrong (or missing)"
+    echo "ERROR: Argument 1 is wrong (or missing)"
     exit
 fi
 
@@ -45,7 +52,7 @@ elif [ "$2" = "n" ]
 then
     FILENAME=$FILENAME"_n"
 else
-    echo "ERROR: Looks like argument 2 is wrong (or missing)"
+    echo "ERROR: Argument 2 is wrong (or missing)"
     exit
 fi
 
@@ -54,7 +61,7 @@ then
     RUNSTRING=$RUNSTRING" -N"$3
     FILENAME=$FILENAME"_"$3
 else
-    echo "ERROR: Looks like argument 3 is missing or greater than 4"
+    echo "ERROR: Argument 3 is missing or greater than 4"
     exit
 fi
 
