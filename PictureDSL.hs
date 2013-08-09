@@ -70,19 +70,20 @@ data Picture v =  Surface Colour (Sampling v)
 data View d v = d :> (Picture v)
 
 evalPicture :: (Enum a, Interp a, InvInterp a, Dataset d) => View d a -> HsScene
-evalPicture (source :> (Surface pal levels)) = 
-  Group static geomlist
+evalPicture (source :> (Surface pal level)) = 
+  Group static [geomlist]
   where
     field      = unsafePerformIO $ readData source
+    values     = Dataset.stream field :: [Float]
     (dx,dy,dz) = dimensions $ shape field
-    mkGrid    :: [a] -> Stream Cell8 MyVertex a
+    mkGrid    :: [t] -> Stream Cell8 MyVertex t
     mkGrid     = cubicGrid (dx, dy, dz)
     points     = mkGrid $ cubicPoints field
-    vcells     = mkGrid $ Dataset.stream field
-    tVals      = fmap toFloat $ samplingToList levels
-    colour     = transfer pal 1.0 1.0 (genericLength $ tVals)
-    contours   = map (\t -> concat $ Algorithms.isosurface t vcells points) $ tVals
-    geomlist   = zipWith surfaceGeom contours $ repeat (map colour [1.0 .. (genericLength $ tVals)])
+    vcells     = mkGrid $ values :: Stream Cell8 MyVertex Float
+    tVal       = head $ samplingToList level
+    colour     = transfer pal 1.0 1.0 1.0 1.0
+    contour    = concat $ Algorithms.isosurface tVal vcells points -- :: [GL.Vertex3 GL.GLfloat]
+    geomlist   = surfaceGeom contour [colour]
 
 evalPicture (source :> (Contour pal levels)) =
   Group static [geometry]

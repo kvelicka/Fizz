@@ -1,5 +1,6 @@
 PictureDSL - Rewrite planePoints
 RectGrid.hs - rewrite squarePoints
+PictureDSL - read files without unsafePerformIO
 
 Profiling:
   Options to compile with profiling
