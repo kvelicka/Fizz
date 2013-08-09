@@ -69,21 +69,21 @@ data Picture v =  Surface Colour (Sampling v)
 -- picture type that is independent of the source
 data View d v = d :> (Picture v)
 
-evalPicture :: (Enum a, Interp a, InvInterp a, Dataset d) => View d a -> HsScene
+evalPicture :: (Interp a, InvInterp a, Dataset d) => View d a -> HsScene
 evalPicture (source :> (Surface pal level)) = 
-  Group static [geomlist]
+  Group static [geometry]
   where
     field      = unsafePerformIO $ readData source
-    values     = Dataset.stream field :: [Float]
+    values     = Dataset.stream field -- :: [Float]
     (dx,dy,dz) = dimensions $ shape field
-    mkGrid    :: [t] -> Stream Cell8 MyVertex t
-    mkGrid     = cubicGrid (dx, dy, dz)
-    points     = mkGrid $ cubicPoints field
-    vcells     = mkGrid $ values :: Stream Cell8 MyVertex Float
+    --mkGrid    :: [t] -> Stream Cell8 MyVertex t
+    --mkGrid     = cubicGrid (dx, dy, dz)
+    points     = cubicGrid (dx, dy, dz) $ cubicPoints field
+    vcells     = cubicGrid (dx, dy, dz) values -- :: Stream Cell8 MyVertex Float
     tVal       = head $ samplingToList level
     colour     = transfer pal 1.0 1.0 1.0 1.0
     contour    = concat $ Algorithms.isosurface tVal vcells points -- :: [GL.Vertex3 GL.GLfloat]
-    geomlist   = surfaceGeom contour [colour]
+    geometry   = surfaceGeom contour [colour]
 
 evalPicture (source :> (Contour pal levels)) =
   Group static [geometry]
