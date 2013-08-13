@@ -10,12 +10,7 @@
 
 module PictureDSL where
 
-import Control.Applicative
-import Control.Parallel.Strategies
 import Data.List (genericLength)
-import Debug.Trace (trace)
-import Prelude hiding (lookup)
-import qualified Data.ByteString as BS
 import qualified Graphics.Rendering.OpenGL.GL as GL
 import System.IO.Unsafe
 
