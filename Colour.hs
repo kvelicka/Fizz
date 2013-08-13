@@ -17,7 +17,6 @@
 
 module Colour where
 
-import Control.Applicative
 import Data.Array (listArray, (!))
 import qualified Graphics.Rendering.OpenGL.GL as GL
 
