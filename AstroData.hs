@@ -7,6 +7,7 @@
 
 module AstroData where
 
+import Control.Parallel.Strategies
 import Data.Bits
 import Data.Char
 import Data.Maybe
@@ -69,12 +70,6 @@ instance Show VisData where
 
 instance Dataset VisData where
   readData = readAstroData
-
-lookup :: (Num a) => Context a -> VisData -> FizzData3D a
-lookup []     vd = error $ "lookup context: Grid "++(show vd)++" not found in context."
-lookup (f:fs) vd 
-    | origin f == (show vd)  = f
-    | otherwise              = lookup fs vd
 
 astroFull :: Time -> Species -> VisData
 astroFull t s = VisData (Range 0 599) (Range 0 247) (Range 0 247) t s
@@ -170,7 +165,7 @@ readAstroData d
                      (zsampling d)
          ; h <- openFile (basename ++ ".dat") ReadMode 
          ; b <- BS.hGetContents h
-         ; let vs = bytesToFloats b
-         ; return $ FizzData basename dim b $ vs
+         ; let !vs = bytesToFloats b `using` (evalList rseq)
+         ; return $ FizzData basename dim b $  vs
          }
   

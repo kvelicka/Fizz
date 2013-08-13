@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables, MultiParamTypeClasses, TypeFamilies,TypeSynonymInstances,TypeOperators, FlexibleInstances  #-}
+{-# LANGUAGE BangPatterns, ScopedTypeVariables, MultiParamTypeClasses, TypeFamilies,TypeSynonymInstances,TypeOperators, FlexibleInstances  #-}
 -- Implementation of a dataset with a regular, rectangular
 -- grid as topology.  This is essentially the dataset
 -- type used in the Vis'06 paper.
@@ -6,6 +6,7 @@
 module RectGrid where
 
 import Control.Applicative
+import Control.Parallel.Strategies
 import Data.Array
 import Data.Char
 import Data.List ((!!), elemIndex,zipWith4, nub)
@@ -39,7 +40,7 @@ instance  (Ix a) => Ix (Cell8 a)  where
 
     index ((Cell8 l1 l2 l3 l4 l5 l6 l7 l8),(Cell8 u1 u2 u3 u4 u5 u6 u7 u8))
           (Cell8 i1 i2 i3 i4 i5 i6 i7 i8) =
-       let a = index (l1,u1) i1 + rangeSize (l1,u1) * (
+       let !a = index (l1,u1) i1 + rangeSize (l1,u1) * (
                 index (l2,u2) i2 + rangeSize (l2,u2) * (
                  index (l3,u3) i3 + rangeSize (l3,u3) * (
                   index (l4,u4) i4 + rangeSize (l4,u4) * (
@@ -166,8 +167,8 @@ instance Cell Cell8 MyVertex where
         G  -> g
         H  -> h
   mcCase =  let table = array (minBound,maxBound::Cell8 Bool)
-                              (map (\ (a,b)-> ( markingToCellBool a
-                                              , concatMap (map edgeToPair) b) )
+                              (map (\ (a,b)-> ( markingToCellBool a,
+                                                concatMap (map edgeToPair) b))
                                    (cellTableVerts CellTypes.cube))
                 markingToCellBool m = let q v = v`elem`m in
                     Cell8 (q A) (q B) (q C) (q D) (q E) (q F) (q G) (q H)
@@ -258,11 +259,11 @@ squareGrid (xmax,ymax)
                                              (drop 1 stream)
                                              (drop (line+1) stream)
                                              (drop line stream)
-          line  = xmax + 1
+          line  = xmax
           discontinuities _ [] = []
           discontinuities (i,j) (x:xs)
-              | j==ymax   = []
-              | i==xmax   =    discontinuities (0,j+1) xs
+              | j==(ymax-1)   = []
+              | i==(xmax-1)   =    discontinuities (0,j+1) xs
               | otherwise = x: discontinuities (i+1,j) xs
 
 

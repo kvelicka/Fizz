@@ -1,4 +1,4 @@
-{-# LANGUAGE ExistentialQuantification, ScopedTypeVariables,FlexibleContexts, TypeFamilies #-}
+{-# LANGUAGE ExistentialQuantification, ScopedTypeVariables,FlexibleContexts, TypeFamilies, BangPatterns #-}
 
 {- The picture DSL.
 
@@ -11,6 +11,7 @@
 module PictureDSL where
 
 import Control.Applicative
+import Control.Parallel.Strategies
 import Data.List (genericLength)
 import Debug.Trace (trace)
 import Prelude hiding (lookup)
@@ -69,19 +70,20 @@ data Picture v =  Surface Colour (Sampling v)
 data View d v = d :> (Picture v)
 
 evalPicture :: (Enum a, Interp a, InvInterp a, Dataset d) => View d a -> HsScene
-evalPicture (source :> (Surface pal levels)) = 
-  Group static geomlist
+evalPicture (source :> (Surface pal level)) = 
+  Group static [geometry]
   where
     field      = unsafePerformIO $ readData source
+    values     = datastream field
     (dx,dy,dz) = dimensions $ shape field
-    mkGrid    :: [a] -> Stream Cell8 MyVertex a
+    mkGrid    :: [t] -> Stream Cell8 MyVertex t
     mkGrid     = cubicGrid (dx, dy, dz)
     points     = mkGrid $ cubicPoints field
-    vcells     = mkGrid $ Dataset.stream field
-    tVals     = fmap toFloat $ samplingToList levels
-    colour     = transfer pal 1.0 1.0 (genericLength $ tVals)
-    contours   = map (\t -> concat $ Algorithms.isosurface t vcells points) $ tVals
-    geomlist   = zipWith surfaceGeom contours $ repeat (map colour [1.0 .. (genericLength $ tVals)])
+    vcells     = mkGrid $ values 
+    tVal       = toFloat $ head $ samplingToList level
+    colour     = transfer pal 1.0 1.0 1.0 1.0
+    contour    = concat $ isosurface tVal vcells points
+    geometry   = surfaceGeom contour [colour]
 
 evalPicture (source :> (Contour pal levels)) =
   Group static [geometry]
@@ -89,34 +91,34 @@ evalPicture (source :> (Contour pal levels)) =
     field    = unsafePerformIO $ readData source
     (dx,dy)  = dimensions2D $ shape field
     mkGrid  :: [a] -> Stream Cell4 MyVertex a
-    mkGrid   = squareGrid (dx-1, dy-1)
+    mkGrid   = squareGrid (dx, dy)
     points   = mkGrid $ squarePoints field
-    vcells   = mkGrid $ Dataset.stream field
-    tVals   = fmap toFloat $ samplingToList levels
+    vcells   = mkGrid $ datastream field
+    tVals    = fmap toFloat $ samplingToList levels
     colour   = transfer pal 1.0 1.0 (genericLength $ tVals)
-    contours = map (\t -> concat $ Algorithms.isosurface t vcells points) $ tVals
+    contours = map (\t -> concat $ isosurface t vcells points) $ tVals
     geometry = contourGeom contours (map colour [1.0 .. (genericLength $ tVals)])
 
 evalPicture (source :> (Slice pal)) =
   Group static $ [plane rows]
   where
     field      = unsafePerformIO $ readData source
-    values     = Dataset.stream field
+    values     = datastream field
     (dx,dy,dz) = dimensions $ shape field
-    points     = planePoints dx dy dz
+    points     = planePoints $ shape field
     colour     = transfer pal 1.0 (minimum $ values) (maximum $ values)
     colours   :: [GL.Color4 GL.GLfloat] = map colour values
-    rows       = splitInto dx {- steps -} $ zip points colours
-    --steps  = case slice_plane (space field) of
-    --           Xequals _ -> dx
-    --           Yequals _ -> dy
-    --           Zequals _ -> dz
+    rows       = splitInto steps $ zip points colours
+    steps  = case slicePlane (shape field) of
+               X_equals _ -> dy
+               Y_equals _ -> dx
+               Z_equals _ -> dx
 
 evalPicture (source :> (Volume pal)) = 
   volumeGeom (dx,dy,dz) points colours
   where
     field      = unsafePerformIO $ readData source
-    values     = Dataset.stream field
+    values     = datastream field
     (dx,dy,dz) = dimensions $ shape field
     points     = cubicPoints field
     colour     = transfer pal 0.4 (minimum $ values) (maximum $ values)
@@ -127,10 +129,3 @@ evalPicture (source :> Draw ps) =
 
 evalPicture (source :> Anim ps) = 
   Animate animControl True (map (\x -> evalPicture (source :> x)) ps) []
-
--- Placeholder, needs rewriting
-planePoints :: Int -> Int -> Int -> [GL.Vertex3 GL.GLfloat]
-planePoints dx dy dz
-  | dx == 1 = trace "dx evaluated" $ [GL.Vertex3 0.0 (realToFrac y) (realToFrac z)   | y <- [0 .. dy-1], z <- [0..dz-1]]
-  | dy == 1 = trace "dy evaluated" $ [GL.Vertex3 (realToFrac x) 0.0 (realToFrac z)   | x <- [0 .. dx-1], z <- [0..dz-1]]
-  | dz == 1 = trace "dz evaluated" $ [GL.Vertex3 (realToFrac x) (realToFrac y) 124.0 | y <- [0 .. dy-1], x <- [0..dx-1]]

@@ -3,3 +3,4 @@
 *.sh
 Viewer
 data/
+logs/

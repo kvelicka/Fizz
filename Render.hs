@@ -306,9 +306,9 @@ render (Camera _ view scene)  = do { clear [DepthBuffer, ColorBuffer]
                                        Just _  -> writeIORef moving True
                                        _       -> writeIORef moving False
                                    ; let (Vertex3 x y z) = eye view
-                               --  ; position (Light 0) $= Vertex4 (f x) (f y) (f z) 1.0
                                    ; position (Light 0) $= Vertex4 1.0 1.0 1.0 0.0
                                    ; render scene
+                                   ; exitWith ExitSuccess
                                    ; swapBuffers
                                    ; flush
                                    }
