@@ -90,5 +90,5 @@ draw = (from4 35 G) :> Draw [(Surface red (Single 2500)), (Surface blue (Single 
 anim = (from4 35 G) :> Anim [(Surface red (Single 2500)), (Surface blue (Single 10000)), (Surface green (Single 15000))]
 volume = (from4 35 G) :> (Volume vis5D)
 sliced = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 G) :> (Slice reds)
---contour = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 G) :> (Contour greens (Sampled 1 500 10001))
-contour = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 G) :> Anim [Contour green (Single t) | t <- [0, 500 .. 30000]]
+contour = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 G) :> (Contour greens (Sampled 1 500 10001))
+contourAnim = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 G) :> Anim [Contour green (Single t) | t <- [0, 500 .. 30000]]

@@ -132,52 +132,6 @@ volumeGeom (xsz,ysz,zsz) gs cs
           xzplanes = foldl' (zipWith $ flip (:)) (replicate ysz []) xyplanes
           voxels   = zip gs cs
 
-
----------------------------------------------------------------------
--- 5.  Scatterplot.  Given three lists of sample values scaled into
--- the range 0..128, we generate a 3D scatterplot with a single point
--- in the plot representing a cell having that combination of sample
--- values.
----------------------------------------------------------------------
-
-scatterplot :: [GLfloat] -> [GLfloat] -> [GLfloat] -> HsScene
-scatterplot vas vbs vcs
-    = compile Nothing $ Group static (points ++ planes)
-      where
-          nbs = 248.0
-          planes = [ makePlane (Normal3 0.0 1.0 0.0) (Color3 0.2 0.2 0.2 :: Color3 GLfloat) $
-                                                      [ Vertex3 0.0 0.0 0.0
-                                                      , Vertex3 nbs 0.0 0.0
-                                                      , Vertex3 nbs nbs 0.0
-                                                      , Vertex3 0.0 nbs 0.0
-                                                      ]
-                   , makePlane (Normal3 1.0 0.0 0.0) (Color3 0.2 0.2 0.2 :: Color3 GLfloat) $
-                                                      [ Vertex3 0.0 0.0 0.0
-                                                      , Vertex3 0.0 0.0 nbs
-                                                      , Vertex3 0.0 nbs nbs
-                                                      , Vertex3 0.0 nbs 0.0
-                                                      ]
-                   , makePlane (Normal3 0.0 0.0 1.0) (Color3 0.2 0.2 0.2 :: Color3 GLfloat) $
-                                                      [ Vertex3 0.0 0.0 0.0
-                                                      , Vertex3 nbs 0.0 0.0
-                                                      , Vertex3 nbs 0.0 nbs
-                                                      , Vertex3 0.0 0.0 nbs
-                                                      ]
-                   ]
-          points = [ Special $ blend  $= Disabled
-                   , Special $ depthMask  $= Enabled
-                   , Geometry static Points [HsGeomCv (Color3 1.0 1.0 1.0 :: Color3 GLfloat) $
-                     zipWith3 Vertex3 vas vbs vcs]
-                   ]
-
-makePlane norm col vs 
-    = Group static $
-      [ Special $ color col
-      , Geometry static Quads [HsGeomNv norm vs]
-      ]
-
-
-
 {- Bits and pieces.  -}
 
 -- An interactor to provide frame-by-frame control over animations.
