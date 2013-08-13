@@ -7,7 +7,6 @@ module Algorithms (isosurface) where
 import Control.Parallel.Strategies
 
 import CellTypes
-import Dataset
 import Maths
 
 -- Generate the isosurface at a given threshold. Note that the surface is 
