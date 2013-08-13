@@ -1,7 +1,5 @@
 module IntOps where
 
-import Test.SmallCheck
-
 -- Closest integer approximation to square root
 -- (could also compute lower bound too)
 intSqroot :: Int -> Int
