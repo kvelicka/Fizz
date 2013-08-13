@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns, ScopedTypeVariables, MultiParamTypeClasses, TypeFamilies,TypeSynonymInstances,TypeOperators, FlexibleInstances  #-}
+{-# LANGUAGE MultiParamTypeClasses, TypeFamilies #-}
 -- Implementation of a dataset with a regular, rectangular
 -- grid as topology.  This is essentially the dataset
 -- type used in the Vis'06 paper.
@@ -6,14 +6,9 @@
 module RectGrid where
 
 import Control.Applicative
-import Control.Parallel.Strategies
 import Data.Array
-import Data.Char
-import Data.List ((!!), elemIndex,zipWith4, nub)
-import Data.Maybe (fromJust)
-import Debug.Trace (trace)
+import Data.List (zipWith4)
 import Graphics.Rendering.OpenGL.GL (Vertex3(..))
-import Prelude hiding (lookup)
 
 import CaseTable
 import CellTypes
@@ -21,6 +16,7 @@ import Dataset
 
 -- Cells in the dataset are cubes.
 
+-- TODO Does this work? Compiles without BangPatterns pragma
 data Cell4 a = Cell4 !a !a !a !a             deriving (Eq,Ord,Show)
 
 data Cell8 a = Cell8 !a !a !a !a !a !a !a !a deriving (Eq,Ord,Show)
@@ -40,7 +36,7 @@ instance  (Ix a) => Ix (Cell8 a)  where
 
     index ((Cell8 l1 l2 l3 l4 l5 l6 l7 l8),(Cell8 u1 u2 u3 u4 u5 u6 u7 u8))
           (Cell8 i1 i2 i3 i4 i5 i6 i7 i8) =
-       let !a = index (l1,u1) i1 + rangeSize (l1,u1) * (
+       let a = index (l1,u1) i1 + rangeSize (l1,u1) * (
                 index (l2,u2) i2 + rangeSize (l2,u2) * (
                  index (l3,u3) i3 + rangeSize (l3,u3) * (
                   index (l4,u4) i4 + rangeSize (l4,u4) * (

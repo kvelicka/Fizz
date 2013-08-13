@@ -35,7 +35,7 @@ module Render
 where
 
 import Data.IORef  (IORef, readIORef, writeIORef, newIORef, modifyIORef)
-import Data.List(transpose,sortBy)
+import Data.List(transpose)
 import Data.Maybe
 import Debug.Trace (trace)
 import Graphics.Rendering.OpenGL
