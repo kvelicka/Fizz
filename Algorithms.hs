@@ -4,7 +4,6 @@
 
 module Algorithms (isosurface) where
 
-import Control.Applicative
 import Control.Parallel.Strategies
 
 import CellTypes
