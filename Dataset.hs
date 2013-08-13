@@ -1,4 +1,4 @@
-{-# LANGUAGE ExistentialQuantification, FunctionalDependencies, FlexibleInstances, TypeOperators, EmptyDataDecls #-}
+{-# LANGUAGE FlexibleInstances, TypeOperators #-}
 
 module Dataset where
 
