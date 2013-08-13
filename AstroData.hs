@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables, MultiParamTypeClasses, PackageImports, BangPatterns #-}
+{-# LANGUAGE BangPatterns #-}
 
 {- Interface to datasets from the IEEE Visualization contest 2008.
    This file implements a set of interfaces for reading, accessing
@@ -8,19 +8,11 @@
 module AstroData where
 
 import Control.Parallel.Strategies
-import Data.Bits
 import Data.Char
-import Data.Maybe
-import Data.Ratio
-import Data.Word
-import Debug.Trace (trace)
-import GHC.Int
-import Numeric
 import Prelude hiding (lookup)
 import qualified Data.ByteString as BS
 import System.IO
 import System.IO.Unsafe (unsafePerformIO)
-import System.Posix.Files
 import Text.ParserCombinators.Poly
 
 import Dataset
