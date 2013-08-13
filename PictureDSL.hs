@@ -1,4 +1,4 @@
-{-# LANGUAGE ExistentialQuantification, ScopedTypeVariables,FlexibleContexts, TypeFamilies, BangPatterns #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 {- The picture DSL.
 
