@@ -1,11 +1,7 @@
 module CaseTable where
 
-import Data.List (last, (\\), nub, nubBy, transpose, elemIndex, partition
-            , tails, intersect, minimumBy, sortBy)
-import Data.Maybe (fromJust)
+import Data.List ((\\), nub, nubBy, partition, tails, intersect)
 import Control.Monad (MonadPlus(..), guard, when)
-on :: (b -> b -> c) -> (a -> b) -> a -> a -> c
-(*) `on` f = \x y -> f x * f y
 
 -- Types describing the original cell.
 data Edge a     = Edge a a deriving Show
