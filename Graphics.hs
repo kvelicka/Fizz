@@ -1,25 +1,14 @@
-{- Visual mapping
-
-   The first section of code supports the visualization techniques available.
-   Not all of these were used in answering the IEEE Visualization contest
-   questions, for example we did no work with vector visualization, but have
-   retained the hedgehog code.
--}
-
 module Graphics where
 
-import Control.Applicative
+import Data.List (foldl')
 import Graphics.Rendering.OpenGL.GL
 import qualified Graphics.UI.GLUT as GLUT
-import Data.List (foldl')
-import Render
-import Colour
-import Maths
-import CellTypes
-import RectGrid
 
-import System.IO.Unsafe
-import System.Exit
+import CellTypes
+import Maths
+import RectGrid
+import Render
+
 ---------------------------------------------------------------------
 -- 1. Isosurfacing: construct a scene from lists of vertex geometry 
 -- and vertex colour.  For the contest, surface colour is uniform,
