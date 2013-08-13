@@ -1,16 +1,11 @@
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, TypeFamilies #-}
+{-# LANGUAGE FunctionalDependencies, TypeFamilies #-}
 
 module CellTypes where
 
 import Control.Applicative
 import Graphics.Rendering.OpenGL as GL
-import qualified Data.ByteString as BS
 
 import CaseTable
-import Dataset
-import Maths
-
-
 
 
 class (Functor c, Enum v) => Cell c v | c -> v where
@@ -20,6 +15,7 @@ class (Functor c, Enum v) => Cell c v | c -> v where
   
 newtype Stream c v a = Stream { stream :: [c a] }
 
+-- TODO Is this still needed?
 newtype Cells c v a = Cells { cells :: [c a] } deriving (Show)
 
 
