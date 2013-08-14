@@ -1,7 +1,6 @@
 {-# LANGUAGE ScopedTypeVariables, GeneralizedNewtypeDeriving #-}
 module Sample where
 
-import Data.Word
 import Foreign
 import Prelude hiding (exponent)
 import qualified Data.ByteString as BS
