@@ -36,8 +36,6 @@ where
 
 import Data.IORef  (IORef, readIORef, writeIORef, newIORef, modifyIORef)
 import Data.List(transpose)
-import Data.Maybe
-import Debug.Trace (trace)
 import Graphics.Rendering.OpenGL
 import Graphics.UI.GLUT as GLUT
 import System.Exit ( exitWith, ExitCode(ExitSuccess) )
@@ -46,10 +44,6 @@ import System.IO.Unsafe (unsafePerformIO)
 type HsVertex = Vertex3 GLfloat
 type HsVector = Vector3 GLfloat
 type HsNormal = Normal3 GLfloat
--- type HsColour = Color3 GLfloat
-
-
-
 
 type Viewpoint = (Vertex3 GLdouble, Vertex3 GLdouble, Vector3 GLdouble)
 
@@ -501,7 +495,7 @@ calibrate (Camera h view g) bounds''
 -- directly beneath the camera.
 addScene :: IORef HsScene -> [HsScene] -> IO()
 addScene g hs = 
-  do { let a = trace "extent is mapped" $ collapse $ map extent hs
+  do { let a = collapse $ map extent hs
      ; modifyIORef g (\(Camera h view (Group g s))
                      -> calibrate (Camera h view (Group g (s++hs))) $ a)
      ; postRedisplay Nothing
