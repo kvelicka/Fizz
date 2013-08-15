@@ -1,5 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables, FlexibleContexts #-}
-
+{-# LANGUAGE NoMonomorphismRestriction #-}
 {- Viewer.hs: a domain-specific language and opengl viewer for
    multi-variate visualization.
 
@@ -39,12 +38,8 @@
 
 module Main where
 
-import Data.List (nubBy)
-
-import Debug.Trace (trace)
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLUT as GLUT
-import System.IO.Unsafe
 
 import AstroData
 import Colour
@@ -66,6 +61,8 @@ import Render
 
 -- run this using GHCi
 
+-- TODO Generalize, currently doesn't work with sampling literals
+-- evalView :: (Enum a, Interp a, InvInterp a, Dataset d) => View d a -> IO()
 evalView :: (Dataset d) => View d Float -> IO()
 evalView view@(source :> picture)  = 
   do { GLUT.initialize "Astro Viewer" [] >> return ()
@@ -85,10 +82,27 @@ main = do { evalView $ surface }
    or inserted into the "main" function as above and then compiled.
 -}
 
-surface = (from4 35 G) :> (Surface red (Single 2500))
-draw = (from4 35 G) :> Draw [(Surface red (Single 2500)), (Surface blue (Single 10000)), (Surface green (Single 15000))]
-anim = (from4 35 G) :> Anim [(Surface red (Single 2500)), (Surface blue (Single 10000)), (Surface green (Single 15000))]
-volume = (from4 35 G) :> (Volume vis5D)
-sliced = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 G) :> (Slice reds)
-contour = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 G) :> (Contour greens (Sampled 1 500 10001))
-contourAnim = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 G) :> Anim [Contour green (Single t) | t <- [0, 500 .. 30000]]
+surface = (from4 35 G) :> 
+          (Surface red (Single 2500))
+surfaceFull = (fromFull 60 G) :> 
+          (Surface red (Single 2500))          
+draw = (from4 35 G) :>
+       Draw [ (Surface red (Single 2500))
+            , (Surface blue (Single 10000))
+            , (Surface green (Single 15000))
+            ]
+anim = (from4 35 G) :>
+       Anim [ (Surface red (Single 2500))
+            , (Surface blue (Single 10000))
+            , (Surface green (Single 15000))
+            ]
+surfaceAnim = (from4 35 G) :>
+              Anim [Surface green (Single t) | t <- [0, 3000 .. 20000]]
+volume = (from4 35 G) :>
+         (Volume vis5D)
+sliced = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 G) :>
+         (Slice reds)
+contour = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 G) :> 
+          (Contour greens (Sampled 1 500 10001))
+contourAnim = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 G) :>
+              Anim [Contour green (Single t) | t <- [0, 500 .. 30000]]

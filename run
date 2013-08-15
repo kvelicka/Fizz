@@ -20,7 +20,7 @@ WRITE=false
 if [ "$1" = "r" ]
 then
     MAKESTRING="ghc Viewer.hs -O2 -rtsopts -threaded"
-    RUNSTRING="../Viewer +RTS -s -K100M"
+    RUNSTRING="../Viewer +RTS -s -K200M"
 elif [ "$1" = "t" ]
 then
     MAKESTRING="ghc Viewer.hs"

@@ -13,13 +13,11 @@ import Graphics.Rendering.OpenGL.GL (Vertex3(..))
 import CaseTable
 import CellTypes
 import Dataset
+import McLookupTable
 
 -- Cells in the dataset are cubes.
 
 -- TODO Does this work? Compiles without BangPatterns pragma
-data Cell4 a = Cell4 !a !a !a !a             deriving (Eq,Ord,Show)
-
-data Cell8 a = Cell8 !a !a !a !a !a !a !a !a deriving (Eq,Ord,Show)
 
 instance  (Ix a) => Ix (Cell8 a)  where
     range ((Cell8 l1 l2 l3 l4 l5 l6 l7 l8),(Cell8 u1 u2 u3 u4 u5 u6 u7 u8)) =
@@ -162,6 +160,8 @@ instance Cell Cell8 MyVertex where
         F  -> f
         G  -> g
         H  -> h
+  mcCase = mcLookup
+  {-
   mcCase =  let table = array (minBound,maxBound::Cell8 Bool)
                               (map (\ (a,b)-> ( markingToCellBool a,
                                                 concatMap (map edgeToPair) b))
@@ -170,6 +170,7 @@ instance Cell Cell8 MyVertex where
                     Cell8 (q A) (q B) (q C) (q D) (q E) (q F) (q G) (q H)
                 edgeToPair (Edge a b) = (a,b)
             in (table!)
+-}
 
 instance Cell Cell4 MyVertex where
   data Facet Cell4 x = FacLine x x
