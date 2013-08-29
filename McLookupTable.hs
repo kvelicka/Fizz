@@ -1,4 +1,4 @@
-module LookupTable (mcLookup) where
+module McLookupTable (mcLookup) where
 
 import CellTypes
 

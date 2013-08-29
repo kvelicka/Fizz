@@ -30,7 +30,7 @@ elif [ "$1" = "h" ]
 then
     eval "ghc Viewer.hs -O2 -rtsopts -threaded -prof -fprof-auto"
     cd data
-    eval "../Viewer +RTS -s -K100M -N2 -p -h"$2
+    eval "../Viewer +RTS -s -K200M -N2 -p -h"$2
     eval "hp2ps -c Viewer.hp; cd .."
     exit
 else

@@ -161,16 +161,6 @@ instance Cell Cell8 MyVertex where
         G  -> g
         H  -> h
   mcCase = mcLookup
-  {-
-  mcCase =  let table = array (minBound,maxBound::Cell8 Bool)
-                              (map (\ (a,b)-> ( markingToCellBool a,
-                                                concatMap (map edgeToPair) b))
-                                   (cellTableVerts CellTypes.cube))
-                markingToCellBool m = let q v = v`elem`m in
-                    Cell8 (q A) (q B) (q C) (q D) (q E) (q F) (q G) (q H)
-                edgeToPair (Edge a b) = (a,b)
-            in (table!)
--}
 
 instance Cell Cell4 MyVertex where
   data Facet Cell4 x = FacLine x x

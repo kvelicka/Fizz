@@ -75,7 +75,7 @@ evalView view@(source :> picture)  =
 -- main: if compiling, you must come up with a Picture expression here
 
 main :: IO ()
-main = do { evalView $ surface }
+main = do { evalView $ surfaceFull }
 
 {- The remainder of this file contains examples of picture-generating 
    expressions.  These can either be entered into the ghc command line,
