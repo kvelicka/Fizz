@@ -64,63 +64,63 @@ data Picture v =  Surface Colour (Sampling v)
 -- picture type that is independent of the source
 data View d v = d :> (Picture v)
 
-evalPicture :: (Enum a, Interp a, InvInterp a, Dataset d) => View d a -> HsScene
-evalPicture (source :> (Surface pal level)) = 
-  Group static [geometry]
-  where
-    field      = unsafePerformIO $ readData source
-    values     = datastream field
-    (dx,dy,dz) = dimensions $ shape field
-    mkGrid    :: [t] -> Stream Cell8 MyVertex t
-    mkGrid     = cubicGrid (dx, dy, dz)
-    points     = mkGrid $ cubicPoints field
-    vcells     = mkGrid $ values 
-    tVal       = toFloat $ head $ samplingToList level
-    colour     = transfer pal 1.0 1.0 1.0 1.0
-    contour    = concat $ isosurface tVal vcells points
-    geometry   = surfaceGeom contour [colour]
+evalPicture :: (Enum a, Interp a, InvInterp a, Dataset d) => View d a -> IO HsScene
+evalPicture (source :> (Surface pal level)) =  
+  do  field <- readData source
+      let values     = datastream field
+          (dx,dy,dz) = dimensions $ shape field
+          mkGrid     = cubicGrid (dx, dy, dz)
+          points     = mkGrid $ cubicPoints field
+          vcells     = mkGrid $ values 
+          tVal       = toFloat $ head $ samplingToList level
+          colour     = transfer pal 1.0 1.0 1.0 1.0
+          contour    = concat $ isosurface tVal vcells points
+          geometry   = surfaceGeom contour [colour]
+      return $ Group static [geometry]
+    
 
 evalPicture (source :> (Contour pal levels)) =
-  Group static [geometry]
-  where
-    field    = unsafePerformIO $ readData source
-    (dx,dy)  = dimensions2D $ shape field
-    mkGrid  :: [a] -> Stream Cell4 MyVertex a
-    mkGrid   = squareGrid (dx, dy)
-    points   = mkGrid $ squarePoints field
-    vcells   = mkGrid $ datastream field
-    tVals    = fmap toFloat $ samplingToList levels
-    colour   = transfer pal 1.0 1.0 (genericLength $ tVals)
-    contours = map (\t -> concat $ isosurface t vcells points) $ tVals
-    geometry = contourGeom contours (map colour [1.0 .. (genericLength $ tVals)])
+  do  field <- readData source
+      let (dx,dy)  = dimensions2D $ shape field
+          mkGrid   = squareGrid (dx, dy)
+          points   = mkGrid $ squarePoints field
+          vcells   = mkGrid $ datastream field
+          tVals    = fmap toFloat $ samplingToList levels
+          colour   = transfer pal 1.0 1.0 (genericLength $ tVals)
+          contours = map (\t -> concat $ isosurface t vcells points) $ tVals
+          geometry = contourGeom contours (map colour [1.0 .. (genericLength $ tVals)])
+      return $ Group static [geometry]
 
 evalPicture (source :> (Slice pal)) =
-  Group static $ [plane rows]
-  where
-    field      = unsafePerformIO $ readData source
-    values     = datastream field
-    (dx,dy,dz) = dimensions $ shape field
-    points     = planePoints $ shape field
-    colour     = transfer pal 1.0 (minimum $ values) (maximum $ values)
-    colours   :: [GL.Color4 GL.GLfloat] = map colour values
-    rows       = splitInto steps $ zip points colours
-    steps  = case slicePlane (shape field) of
-               X_equals _ -> dy
-               Y_equals _ -> dx
-               Z_equals _ -> dx
+  do  field <- readData source
+      let values     = datastream field
+          (dx,dy,dz) = dimensions $ shape field
+          points     = planePoints $ shape field
+          colour     = transfer pal 1.0 (minimum $ values) (maximum $ values)
+          colours   :: [GL.Color4 GL.GLfloat] = map colour values
+          rows       = splitInto steps $ zip points colours
+          steps  = case slicePlane (shape field) of
+                     X_equals _ -> dy
+                     Y_equals _ -> dx
+                     Z_equals _ -> dx
+      return $ Group static $ [plane rows]
 
 evalPicture (source :> (Volume pal)) = 
-  volumeGeom (dx,dy,dz) points colours
-  where
-    field      = unsafePerformIO $ readData source
-    values     = datastream field
-    (dx,dy,dz) = dimensions $ shape field
-    points     = cubicPoints field
-    colour     = transfer pal 0.4 (minimum $ values) (maximum $ values)
-    colours   :: [GL.Color4 GL.GLfloat] = map colour values
+  do  field <- readData source
+      let values     = datastream field
+          (dx,dy,dz) = dimensions $ shape field
+          points     = cubicPoints field
+          colour     = transfer pal 0.4 (minimum $ values) (maximum $ values)
+          colours   :: [GL.Color4 GL.GLfloat] = map colour values
+          geometry   = volumeGeom (dx,dy,dz) points colours
+      return $ Group static [geometry]
 
 evalPicture (source :> Draw ps) =
-  Group static $ map (\x -> evalPicture (source :> x) ) ps
+  do  
+      pictures <- sequence $ map (\x -> evalPicture (source :> x) ) ps
+      return $ Group static pictures
 
 evalPicture (source :> Anim ps) = 
-  Animate animControl True (map (\x -> evalPicture (source :> x)) ps) []
+  do
+      pictures <- sequence $ (map (\x -> evalPicture (source :> x)) ps)
+      return $ Animate animControl True pictures []

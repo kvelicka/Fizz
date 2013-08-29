@@ -12,7 +12,6 @@ import Data.Char
 import Prelude hiding (lookup)
 import qualified Data.ByteString as BS
 import System.IO
-import System.IO.Unsafe (unsafePerformIO)
 import Text.ParserCombinators.Poly
 
 import Dataset

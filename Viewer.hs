@@ -61,21 +61,19 @@ import Render
 
 -- run this using GHCi
 
--- TODO Generalize, currently doesn't work with sampling literals
--- evalView :: (Enum a, Interp a, InvInterp a, Dataset d) => View d a -> IO()
 evalView :: (Dataset d) => View d Float -> IO()
 evalView view@(source :> picture)  = 
   do { GLUT.initialize "Astro Viewer" [] >> return ()
      ; g <- openGraphics "Scene Viewer" (1000,800)
-     ; addScene g $ [Imposter (Group static [axes 600.0 248.0 248.0, evalPicture view]) (bbox 600 248 248) ]
+     ; picture <- evalPicture view
+     ; addScene g $ [Imposter (Group static [axes 600.0 248.0 248.0, picture]) (bbox 600 248 248) ]
      ; GLUT.mainLoop
      }
-
 
 -- main: if compiling, you must come up with a Picture expression here
 
 main :: IO ()
-main = do { evalView $ surfaceFull }
+main = do { evalView $ contourAnim }
 
 {- The remainder of this file contains examples of picture-generating 
    expressions.  These can either be entered into the ghc command line,
@@ -84,25 +82,33 @@ main = do { evalView $ surfaceFull }
 
 surface = (from4 35 G) :> 
           (Surface red (Single 2500))
+
 surfaceFull = (fromFull 60 G) :> 
           (Surface red (Single 2500))          
+
 draw = (from4 35 G) :>
        Draw [ (Surface red (Single 2500))
             , (Surface blue (Single 10000))
             , (Surface green (Single 15000))
             ]
+
+surfaceAnim = (from4 35 G) :>
+              Anim [Surface green (Single t) | t <- [0, 3000 .. 20000]]
+
 anim = (from4 35 G) :>
        Anim [ (Surface red (Single 2500))
             , (Surface blue (Single 10000))
             , (Surface green (Single 15000))
             ]
-surfaceAnim = (from4 35 G) :>
-              Anim [Surface green (Single t) | t <- [0, 3000 .. 20000]]
+
 volume = (from4 35 G) :>
          (Volume vis5D)
+
 sliced = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 G) :>
          (Slice reds)
+
 contour = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 G) :> 
           (Contour greens (Sampled 1 500 10001))
+
 contourAnim = (VisData (Range 0 599) (Range 0 247) (Single 124) 15 G) :>
-              Anim [Contour green (Single t) | t <- [0, 500 .. 30000]]
+              Anim [Contour green (Single t) | t <- [0, 500 .. 20000]]
