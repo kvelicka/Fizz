@@ -8,8 +8,8 @@ An attempt was made to make the original code more modular, but that work was no
 
 1. Get the code to a state where it is running properly (done)
 2. Make the code feature-complete with the code from the paper (done)
-3. Clean the code up
-4. Put the code in loosely-coupled modules
+3. Clean the code up (done)
+4. Put the code in loosely-coupled modules (done to an extent)
 5. Generalize the code to accept more generic datasets (done)
-6. Improve the performance of the visualizer
+6. Improve the performance of the visualizer (~2x improvement so far)
 7. Extend the capabilities of the visualizer
