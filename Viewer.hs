@@ -7,31 +7,13 @@
 
    Contact: djd@comp.leeds.ac.uk
 
-   Usage: this code can be used either as a stand-alone program, or
-   via the GHC interpreter ghci (which comes as part of the standard
-   ghc release - see www.haskell.org/ghc/
-
-   If compiled to an executable, you need to set up the "main" function
-   toward the end of the file to generate the desired picture, then
-   compile using ghc, and run the executable.
-
-   At the command line, start ghci with
-   ghci -fglasgow-exts -O2 Viewer.hs +RKS -K90M
-
-   At the ghci command prompt, you can then enter an expression
-   for execution as a picture; for example, to generate 
-       - a contour plot of the "G" field,
-       - for the slice z=124 at full resolution, 
-       - with contours spaced at 1000-degree intervals, and 
-       - coloured using a red-based Brewer palette, 
-
-   use
-       exec $ Contour reds (Sampled 1000 2000 20000) (Use (From (Range 0 599) (Range 0 247) (Single 124) 60 G))
+   Usage: this code is used as a stand-alone program. You need to set
+   up the "main" function toward the end of the file to generate the 
+   desired picture, then  compile using ghc, and run the executable.
 
    A number of example visualizations have been pre-defined at the end
-   of this file as simple expressions, for example entering "new_fingers" at
-   ghci prompt will produce an animation of a superimposed contour and 
-   slice over time.
+   of this file as simple expressions, each of which demonstrates
+   the capabilities of the visualizer.
 
    See the README file and PictureDSL.hs for further details of the picture language.
 -}
@@ -49,7 +31,7 @@ import Maths
 import PictureDSL
 import Render
 
-
+-- TODO change this
 -- TOP LEVEL: execute an expression specifying a picture.
 -- The picture expression is first traversed to determine 
 -- the files required; access to these via ByteStrings or
@@ -58,8 +40,6 @@ import Render
 -- then used by the picture evaluator.  This two-stage
 -- process means that the interpreter does not need to 
 -- make IO calls itself, simplifying the presentation.
-
--- run this using GHCi
 
 evalView :: (Dataset d) => View d Float -> IO()
 evalView view@(source :> picture)  = 
@@ -70,10 +50,8 @@ evalView view@(source :> picture)  =
      ; GLUT.mainLoop
      }
 
--- main: if compiling, you must come up with a Picture expression here
-
 main :: IO ()
-main = do { evalView $ contourAnim }
+main = do { evalView $ surface }
 
 {- The remainder of this file contains examples of picture-generating 
    expressions.  These can either be entered into the ghc command line,

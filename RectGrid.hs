@@ -17,8 +17,6 @@ import McLookupTable
 
 -- Cells in the dataset are cubes.
 
--- TODO Does this work? Compiles without BangPatterns pragma
-
 instance  (Ix a) => Ix (Cell8 a)  where
     range ((Cell8 l1 l2 l3 l4 l5 l6 l7 l8),(Cell8 u1 u2 u3 u4 u5 u6 u7 u8)) =
           [(Cell8 i1 i2 i3 i4 i5 i6 i7 i8) 
@@ -193,7 +191,7 @@ instance Cell Cell4 MyVertex where
 -- Generate a dataset consisting of the coordinates in a (xsz x ysz x zsz)-cube.
 -- Note that the origin of the cube is (0,0,0), and that the components refer
 -- to the number of CELLS along each dimension.
-cubicGeom :: (Floating a) => FizzData DIM3 v -> Stream Cell8 MyVertex (Vertex3 a)
+cubicGeom :: (Floating a) => FizzData DIM3 v -> Cells Cell8 MyVertex (Vertex3 a)
 cubicGeom f 
     = cubicGrid (dimensions $ shape f) $ (cubicPoints f)
 
@@ -216,9 +214,9 @@ squarePoints g = [ Vertex3 (fromIntegral i) (fromIntegral j) 124
 -- cube where the components here refer to the size of a dimension 
 -- in POINTs.
 
-cubicGrid :: (Int,Int,Int) -> [a] -> Stream Cell8 MyVertex a
+cubicGrid :: (Int,Int,Int) -> [a] -> Cells Cell8 MyVertex a
 cubicGrid (xmax,ymax,zmax) 
-    = Stream . (discontinuities (0,0,0)) . zipCube
+    = Cells . (discontinuities (0,0,0)) . zipCube
       where
           zipCube stream = zipWith8 Cell8 stream
                                            (drop 1 stream)
@@ -238,9 +236,9 @@ cubicGrid (xmax,ymax,zmax)
               | i==(xmax-1)   =    discontinuities (0,j+1,k) xs
               | otherwise     = x: discontinuities (i+1,j,k) xs
 
-squareGrid :: (Int, Int) -> [a] -> Stream Cell4 MyVertex a
+squareGrid :: (Int, Int) -> [a] -> Cells Cell4 MyVertex a
 squareGrid (xmax,ymax) 
-    = Stream . (discontinuities (0,0)) . zipSquare
+    = Cells . (discontinuities (0,0)) . zipSquare
       where
           zipSquare stream = zipWith4 Cell4 stream
                                              (drop 1 stream)

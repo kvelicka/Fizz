@@ -141,12 +141,6 @@ integer = do cs <- many1 (satisfy isDigit)
 
 -- Low-level IO and conversion ----------------------------------------------
 
-readAstroFile :: String -> IO (FizzData DIM3 a)
-readAstroFile str
-    = readAstroData (result . fst . runParser slice $ str)
-      where result (Left err) = error err       
-            result (Right ok) = ok
-
 readAstroData :: VisData -> IO (FizzData DIM3 a)
 readAstroData d
     = do { let basename = show d

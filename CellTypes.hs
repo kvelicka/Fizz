@@ -17,12 +17,7 @@ data Cell4 a = Cell4 !a !a !a !a             deriving (Eq,Ord,Show)
 
 data Cell8 a = Cell8 !a !a !a !a !a !a !a !a deriving (Eq,Ord,Show)
 
-
-newtype Stream c v a = Stream { stream :: [c a] }
-
--- TODO Is this still needed? Yes, replace Stream
 newtype Cells c v a = Cells { cells :: [c a] } deriving (Show)
-
 
 -- Pairing allows us to take two datasets (which should have the same
 -- dimensionality, but this is not checked), and construct a dataset

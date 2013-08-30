@@ -16,10 +16,10 @@ import Maths
 -- interface to OpenGL).
 
 isosurface :: (Interp a, InvInterp a, Interp g, Cell c v, Enum v) =>
-    a -> Stream c v a -> Stream c v g -> [[g]]
+    a -> Cells c v a -> Cells c v g -> [[g]]
 isosurface threshold samples geometry
     = (map (surfCell threshold) $
-      zip (stream samples) (stream geometry)) `using`
+      zip (cells samples) (cells geometry)) `using`
       (parListChunk 2048 rseq)
 
 surfCell :: (Interp a, InvInterp a, Interp g, Cell c v) =>
