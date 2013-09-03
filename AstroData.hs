@@ -148,7 +148,7 @@ readAstroData d
                      (xsampling d) :.
                      (ysampling d) :.
                      (zsampling d)
-         ; h <- openFile (basename ++ ".dat") ReadMode 
+         ; h <- openBinaryFile (basename ++ ".dat") ReadMode 
          ; b <- BS.hGetContents h
          ; let !vs = bytesToFloats b `using` (evalList rseq)
          ; return $ FizzData basename dim b $  vs

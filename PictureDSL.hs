@@ -12,7 +12,6 @@ module PictureDSL where
 
 import Data.List (genericLength)
 import qualified Graphics.Rendering.OpenGL.GL as GL
-import System.IO.Unsafe
 
 import Algorithms
 import AstroData
@@ -117,7 +116,7 @@ evalPicture (source :> (Volume pal)) =
 
 evalPicture (source :> Draw ps) =
   do  
-      pictures <- sequence $ map (\x -> evalPicture (source :> x) ) ps
+      pictures <- sequence $ map (\x -> evalPicture (source :> x) ) ps -- `using` rpar)
       return $ Group static pictures
 
 evalPicture (source :> Anim ps) = 
