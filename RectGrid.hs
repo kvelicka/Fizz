@@ -7,6 +7,7 @@ module RectGrid where
 
 import Control.Applicative
 import Data.Array
+import Data.Array.Repa hiding (index, (!))
 import Data.List (zipWith4)
 import Graphics.Rendering.OpenGL.GL (Vertex3(..))
 
@@ -191,23 +192,23 @@ instance Cell Cell4 MyVertex where
 -- Generate a dataset consisting of the coordinates in a (xsz x ysz x zsz)-cube.
 -- Note that the origin of the cube is (0,0,0), and that the components refer
 -- to the number of CELLS along each dimension.
-cubicGeom :: (Floating a) => FizzData DIM3 v -> Cells Cell8 MyVertex (Vertex3 a)
+cubicGeom :: (Floating a) => FizzData v -> Cells Cell8 MyVertex (Vertex3 a)
 cubicGeom f 
-    = cubicGrid (dimensions $ shape f) $ (cubicPoints f)
+    = cubicGrid (dimensions $ samplings f) $ (cubicPoints f)
 
 -- Generate a list of coordinates for a (xsz x ysz x zsz)-cube, starting
 -- from (0,0,0).
-cubicPoints :: (Num a) => FizzData DIM3 v -> [Vertex3 a]
+cubicPoints :: (Num a) => FizzData v -> [Vertex3 a]
 cubicPoints g = [ Vertex3 (fromIntegral i) (fromIntegral j) (fromIntegral k)
-                | k <- listZ (shape g)
-                , j <- listY (shape g)
-                , i <- listX (shape g)
+                | k <- listZ (samplings g)
+                , j <- listY (samplings g)
+                , i <- listX (samplings g)
                 ]
 
-squarePoints :: (Num a) => FizzData DIM3 v -> [Vertex3 a]
+squarePoints :: (Num a) => FizzData v -> [Vertex3 a]
 squarePoints g = [ Vertex3 (fromIntegral i) (fromIntegral j) 124
-                 | j <- listY (shape g)
-                 , i <- listX (shape g)
+                 | j <- listY (samplings g)
+                 , i <- listX (samplings g)
                  ]
 -- Generate a stream (dataset) of 8-tuple cell samples taken from
 -- an input stream of values.  The dataset is an (xmax x ymax x zmax)

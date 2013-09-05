@@ -67,7 +67,7 @@ evalPicture :: (Enum a, Interp a, InvInterp a, Dataset d) => View d a -> IO HsSc
 evalPicture (source :> (Surface pal level)) =  
   do  field <- readData source
       let values     = datastream field
-          (dx,dy,dz) = dimensions $ shape field
+          (dx,dy,dz) = dimensions $ samplings field
           mkGrid     = cubicGrid (dx, dy, dz)
           points     = mkGrid $ cubicPoints field
           vcells     = mkGrid $ values 
@@ -80,7 +80,7 @@ evalPicture (source :> (Surface pal level)) =
 
 evalPicture (source :> (Contour pal levels)) =
   do  field <- readData source
-      let (dx,dy)  = dimensions2D $ shape field
+      let (dx,dy)  = dimensions2D $ samplings field
           mkGrid   = squareGrid (dx, dy)
           points   = mkGrid $ squarePoints field
           vcells   = mkGrid $ datastream field
@@ -93,12 +93,12 @@ evalPicture (source :> (Contour pal levels)) =
 evalPicture (source :> (Slice pal)) =
   do  field <- readData source
       let values     = datastream field
-          (dx,dy,dz) = dimensions $ shape field
-          points     = planePoints $ shape field
+          (dx,dy,dz) = dimensions $ samplings field
+          points     = planePoints $ samplings field
           colour     = transfer pal 1.0 (minimum $ values) (maximum $ values)
           colours   :: [GL.Color4 GL.GLfloat] = map colour values
           rows       = splitInto steps $ zip points colours
-          steps  = case slicePlane (shape field) of
+          steps  = case slicePlane (samplings field) of
                      X_equals _ -> dy
                      Y_equals _ -> dx
                      Z_equals _ -> dx
@@ -107,7 +107,7 @@ evalPicture (source :> (Slice pal)) =
 evalPicture (source :> (Volume pal)) = 
   do  field <- readData source
       let values     = datastream field
-          (dx,dy,dz) = dimensions $ shape field
+          (dx,dy,dz) = dimensions $ samplings field
           points     = cubicPoints field
           colour     = transfer pal 0.4 (minimum $ values) (maximum $ values)
           colours   :: [GL.Color4 GL.GLfloat] = map colour values

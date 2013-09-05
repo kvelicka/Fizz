@@ -1,13 +1,53 @@
-module FixedPrecision where
+{-# LANGUAGE ScopedTypeVariables, GeneralizedNewtypeDeriving #-}
+
+module FixedPrecisionMath where
 
 import Data.Char
 import Data.Int
 import Data.Ratio
+import Foreign
 import Prelude hiding (exponent)
+import qualified Data.ByteString as BS
 import Text.ParserCombinators.Poly
 
-import IntOps
 
+-- Previous IntOps.hs
+-- Closest integer approximation to square root
+-- (could also compute lower bound too)
+intSqroot :: Int -> Int
+intSqroot i = intSqroot' 0 (rootBound i)
+  where
+  -- invariant: lo*lo <= i && i <= hi*hi
+  intSqroot' lo hi | hi == lo   = hi
+                   | hi == lo+1 = case compare (i-lo*lo) (hi*hi-i) of
+                                  LT -> lo
+                                  EQ -> lo
+                                  GT -> hi
+                   | otherwise  = let mid = (lo+hi) `div` 2 in
+                                  case compare (mid*mid) i of
+                                  LT -> intSqroot' mid hi
+                                  EQ -> mid
+                                  GT -> intSqroot' lo mid
+
+rootBound i = if i < 100 then smallRootBound i else 10 * rootBound ((i `div` 100) + 1)
+  where
+  smallRootBound i = length (takeWhile (i>) [d*d | d <- [0..9]])
+
+propIntSqrootMinErr :: Int -> Bool
+propIntSqrootMinErr i =
+  rdiff == minimum diffs
+  where
+  r     = intSqroot i
+  diffs = [abs (i - j*j) | j <- [r-1 .. r+1]]
+  rdiff =  abs (i - r*r)
+
+propRootBound :: Int -> Bool
+propRootBound i = rb * rb >= i
+  where
+  rb = rootBound i
+
+
+-- Previous FixedPrecision.hs
 data FixedPrecision = FP
     { mantissa :: Int32  	-- 4 digits, range +/- 1000-9999
     , exponent :: Int32  	-- 3 digits, range +/- 000-999
@@ -113,3 +153,35 @@ line = do ss <- exactly 9 (do s <- sample
           s <- sample
           satisfy (=='\n')
           return (s:ss)
+
+-- Previous Sample.hs
+newtype Sample = Sample { s :: Word32 }
+    deriving (Storable, Show)
+
+fromSample :: Sample -> FixedPrecision
+fromSample (Sample s) = FP m e
+  where
+    m32 :: Int32 = fromIntegral $ s `shiftL` 16
+    m = fromIntegral $ m32 `shiftR` 16
+    e32 :: Int32 = fromIntegral $ s
+    e = fromIntegral $ e32 `shiftR` 16
+
+bytesToSamples :: BS.ByteString -> [Sample]
+bytesToSamples bs 
+    | BS.null bs   = []
+    | otherwise      = (Sample s):bytesToSamples post
+                       where
+                           -- INEFFICIENT
+                           (pre,post) = BS.splitAt 4 bs
+                           [a,b,c,d]  = BS.unpack pre
+                           s = (a32 .|. b32 .|. c32 .|. d32)
+                           a32 :: Word32 = fromIntegral a `shiftL` 24
+                           b32 :: Word32 = fromIntegral b `shiftL` 16
+                           c32 :: Word32 = fromIntegral c `shiftL`  8
+                           d32 :: Word32 = fromIntegral d
+
+sampleToFloat :: Sample -> Float
+sampleToFloat = fromRational . toRational . fromSample
+
+bytesToFloats :: BS.ByteString -> [Float]
+bytesToFloats bs = map sampleToFloat $ bytesToSamples bs

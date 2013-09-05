@@ -8,6 +8,9 @@
 module AstroData where
 
 import Control.Parallel.Strategies
+import Data.Array.Repa hiding ( (++), map )
+import Data.Array.Repa.IO.Binary
+import Data.Array.Repa.Repr.ForeignPtr
 import Data.Char
 import Prelude hiding (lookup)
 import qualified Data.ByteString as BS
@@ -15,8 +18,6 @@ import System.IO
 import Text.ParserCombinators.Poly
 
 import Dataset
-import FixedPrecision
-import Sample hiding (s)
 
 -- Dataset definitions ------------------------------------------------------
 data Species = D | G | H | Hp | He | Hep | Hepp | Hm | H2 | H2p
@@ -141,16 +142,11 @@ integer = do cs <- many1 (satisfy isDigit)
 
 -- Low-level IO and conversion ----------------------------------------------
 
-readAstroData :: VisData -> IO (FizzData DIM3 a)
+readAstroData :: VisData -> IO (FizzData Float)
 readAstroData d
     = do { let basename = show d
-         ; let dim = Z :. 
-                     (xsampling d) :.
-                     (ysampling d) :.
-                     (zsampling d)
-         ; h <- openBinaryFile (basename ++ ".dat") ReadMode 
-         ; b <- BS.hGetContents h
-         ; let !vs = bytesToFloats b `using` (evalList rseq)
-         ; return $ FizzData basename dim b $  vs
+         ; let samps = (xsampling d, ysampling d, zsampling d)
+         ; vs <- readArrayFromStorableFile (basename ++ ".dat") (Z :. 576600) :: IO (Array F DIM1 Float)
+         ; return $ FizzData basename samps (toList vs)
          }
   
