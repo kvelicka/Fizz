@@ -1,22 +1,22 @@
 #! /bin/bash
 
 # Maker/tester/runner for the experimental version of Fizz.
-# Usage: ./run.sh r|t e|p|n 1|2 ["name"]
+# Usage: ./run.sh r|t e|p|n|h 1|2[|h-opts]
 # Mods:
-# r - run; run Viewer from /data/ with options from e|p|n
+# r - run; run Viewer from /data/ with options from e|p|n|h
 # t - test; make Viewer, used to see if there are any compile time errors
 # e - eventlog; compiles and runs the file with eventlog enabled
 # p - profile; compiles and runs the file with profiling enabled
 # n - neither profiling nor eventlog is enabled
+# h - runs the program with heap profiling, converts output to a .ps file.
+#     For this option third arg is an extra arg for heap profile, i.e. -h[arg]
 # 1|2 - number of cores in execution, from ghc's -N*
-# "name" - name parameter for the log, log is recored with this enabled
+#
+# Examples:
+# ./run t - test, compile with no optimization
+# ./run r e 2, compile+run with eventlong enabled, two cores
 
 cd ~/Dropbox/Work/Fizz
-GIT_SHA=$(git rev-parse HEAD)
-DATE=$(date +%Y-%m-%d_%H:%M)
-FILENAME=$DATE
-WRITE=false
-
 if [ "$1" = "r" ]
 then
     MAKESTRING="ghc Viewer.hs -O2 -rtsopts -threaded"
@@ -42,15 +42,20 @@ if [ "$2" = "e" ]
 then
     MAKESTRING=$MAKESTRING" -eventlog"
     RUNSTRING=$RUNSTRING" -ls"
-    FILENAME=$FILENAME"_e"
 elif [ "$2" = "p" ]
 then
     MAKESTRING=$MAKESTRING" -prof -fprof-auto"
     RUNSTRING=$RUNSTRING" -p"
-    FILENAME=$FILENAME"_p"
+elif [ "$2" = "h" ]
+then
+    MAKESTRING=$MAKESTRING" -prof -fprof-auto"
+    cd data
+    eval "../Viewer +RTS -s -K200M -N2 -p -h"$3
+    eval "hp2ps -c Viewer.hp; cd .."
+    exit
 elif [ "$2" = "n" ]
 then
-    FILENAME=$FILENAME"_n"
+    : # proceed, no extra options
 else
     echo "ERROR: Argument 2 is wrong (or missing)"
     exit
@@ -65,22 +70,10 @@ else
     exit
 fi
 
-if [ -n "$4" ]
-then
-    FILENAME=$FILENAME"_"$4
-    WRITE=true
-fi
-
-FILENAME=$FILENAME"_"$GIT_SHA
+cd data
 
 RUNSTRING=$RUNSTRING" -RTS"
 eval $MAKESTRING
-cd data/
-if [ $WRITE = "true" ]
-then
-    eval $RUNSTRING 2> ../logs/$FILENAME.txt
-else
-    eval $RUNSTRING
-fi
+eval $RUNSTRING
 
 cd ..

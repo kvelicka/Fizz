@@ -1,13 +1,11 @@
 {-
-  Small tool for converting old FP (FixedPrecision) files to
-  a binary IEEE format float files.
+  Small tool for converting old FP (FixedPrecision) files to a binary IEEE
+   format float files. Old file is retained, with an -old prefix
+  
   Usage:
-  ./FP2floats [all|w|rr|rbs] infile outfile
+  ./FP2floats [all|w|rr|rbs] infile 
   w - reads FP-formatted infile, writes float-formatted outfile
-  NOTE: following modes still techincally take three args, example:
-  ./FP2floats rr myfile.dat ""
   all - specify directory as infile, converts all .dat files to float format
-        (old files are left with a -old suffix)
   rr - prints contents of a repa (float-formatted) file to stdout
   rbs - prints contents of a bytestring (FP-formatted) file to stdout
 -}
@@ -54,6 +52,12 @@ write input output = do
   let strings = map toIEEE $ bytesToFloats b
   S.writeFile output $ S.concat strings
 
+writeOne :: String -> IO ()
+writeOne input = do
+  let oldName = input ++ ".dat"
+  rename input oldName
+  write oldName input
+
 writeAll :: String -> IO ()
 writeAll dir = do
   newNames <- files dir
@@ -80,9 +84,9 @@ readBS input = do
   mapM_ (putStrLn . show) floats
 
 main = do
-  [mode, infile, outfile] <- getArgs
+  [mode, infile] <- getArgs
   case mode of
-    "w"  -> write infile outfile
+    "w"  -> writeOne infile
     "all" -> writeAll infile
     "rr"  -> readRepa infile
     "rbs" -> readBS infile
