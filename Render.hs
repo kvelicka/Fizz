@@ -305,7 +305,7 @@ render (Camera _ view scene)  = do { clear [DepthBuffer, ColorBuffer]
                                    -- Used for performance measurements - all data
                                    -- is evaluated but Viewer is instantly closed
                                    -- to make for accurate timing data.
-                                -- ; exitWith ExitSuccess
+                                   ; exitWith ExitSuccess
                                    ; swapBuffers
                                    ; flush
                                    }

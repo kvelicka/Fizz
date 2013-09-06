@@ -116,7 +116,7 @@ evalPicture (source :> (Volume pal)) =
 
 evalPicture (source :> Draw ps) =
   do  
-      pictures <- sequence $ map (\x -> evalPicture (source :> x) ) ps -- `using` rpar)
+      pictures <- sequence $ map (\x -> evalPicture (source :> x) ) ps
       return $ Group static pictures
 
 evalPicture (source :> Anim ps) = 

@@ -39,6 +39,7 @@ files dir = do
   return $ map ((dir++"/")++) $ filter (\x -> x =~ pat :: Bool) files
 
 -- Renames all files in the list by adding a suffix to their names
+-- and returns the list of new names
 renameAll :: [String] -> String -> IO [String]
 renameAll files suffix = do
   let suffixes = map (++suffix) files
