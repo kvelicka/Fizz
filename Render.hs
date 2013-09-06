@@ -302,7 +302,10 @@ render (Camera _ view scene)  = do { clear [DepthBuffer, ColorBuffer]
                                    ; let (Vertex3 x y z) = eye view
                                    ; position (Light 0) $= Vertex4 1.0 1.0 1.0 0.0
                                    ; render scene
-                                   ; exitWith ExitSuccess
+                                   -- Used for performance measurements - all data
+                                   -- is evaluated but Viewer is instantly closed
+                                   -- to make for accurate timing data.
+                                -- ; exitWith ExitSuccess
                                    ; swapBuffers
                                    ; flush
                                    }

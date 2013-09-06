@@ -143,10 +143,16 @@ integer = do cs <- many1 (satisfy isDigit)
 -- Low-level IO and conversion ----------------------------------------------
 
 readAstroData :: VisData -> IO (FizzData Float)
-readAstroData d
-    = do { let basename = show d
-         ; let samps = (xsampling d, ysampling d, zsampling d)
-         ; vs <- readArrayFromStorableFile (basename ++ ".dat") (Z :. 576600) :: IO (Array F DIM1 Float)
-         ; return $ FizzData basename samps (toList vs)
-         }
+readAstroData d = do
+  let basename = (show d ++ ".dat")
+      samps = (xsampling d, ysampling d, zsampling d)
+  h <- openBinaryFile basename ReadMode 
+  -- Get file size to find the required repa array size
+  sz <- hFileSize h
+  hClose h
+  vs <- readArrayFromStorableFile 
+          basename
+          (Z :. ((fromIntegral sz) `div` 4)) :: IO (Array F DIM1 Float)
+  return $ FizzData basename samps (toList vs)
+      
   

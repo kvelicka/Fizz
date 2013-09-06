@@ -1,6 +1,8 @@
 *.hi
 *.o
 *.sh
+*.txt
 Viewer
+FP2floats
 data/
 logs/

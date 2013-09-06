@@ -61,6 +61,9 @@ main = do { evalView $ surface }
 surface = (from4 35 G) :> 
           (Surface red (Single 2500))
 
+surface2 = (from4 30 Mv) :> 
+          (Surface red (Single 2500))
+
 surfaceFull = (fromFull 60 G) :> 
           (Surface red (Single 2500))          
 
