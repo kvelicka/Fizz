@@ -51,7 +51,7 @@ evalView view@(source :> picture)  =
      }
 
 main :: IO ()
-main = do { evalView $ volume }
+main = do { evalView $ surface }
 
 {- The remainder of this file contains examples of picture-generating 
    expressions.  These can either be entered into the ghc command line,

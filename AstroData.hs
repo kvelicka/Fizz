@@ -144,15 +144,14 @@ integer = do cs <- many1 (satisfy isDigit)
 
 readAstroData :: VisData -> IO (FizzData Float)
 readAstroData d = do
-  let basename = (show d ++ ".dat")
+  let name = (show d ++ ".dat")
       samps = (xsampling d, ysampling d, zsampling d)
-  h <- openBinaryFile basename ReadMode 
-  -- Get file size to find the required repa array size
-  sz <- hFileSize h
-  hClose h
+  sz <- fileSize name
   vs <- readArrayFromStorableFile 
-          basename
+          name
           (Z :. ((fromIntegral sz) `div` 4)) :: IO (Array F DIM1 Float)
-  return $ FizzData basename samps (toList vs)
+  deepSeqArray vs $ return ()
+  let !list = toList vs `using` rseq
+  return $ FizzData name samps list
       
   

@@ -44,6 +44,12 @@ renameAll files suffix = do
   zipWithM_ rename files suffixes
   return suffixes
 
+fileSize :: FilePath -> IO Int
+fileSize path = do
+  h <- openBinaryFile path ReadMode 
+  sz <- hFileSize h
+  hClose h
+  return $ fromIntegral sz
 
 write :: String -> String -> IO ()
 write input output = do
@@ -66,10 +72,7 @@ writeAll dir = do
 
 readRepa :: String -> IO ()
 readRepa input = do
-  -- Get file size to find the required repa array size
-  h <- openBinaryFile input ReadMode 
-  sz <- hFileSize h
-  hClose h
+  sz <- fileSize input
   vs <- readArrayFromStorableFile 
         input
          (Z :. ((fromIntegral sz) `div` 4)) :: IO (Array F DIM1 Float)

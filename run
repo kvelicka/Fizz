@@ -15,8 +15,9 @@
 # Examples:
 # ./run t - test, compile with no optimization
 # ./run r e 2, compile+run with eventlong enabled, two cores
+# NOTE: Script is designed to be run from the directory where all code files
+# are placed, with data files stored in data/ subdirectory
 
-cd ~/Dropbox/Work/Fizz
 if [ "$1" = "r" ]
 then
     MAKESTRING="ghc Viewer.hs -O2 -rtsopts -threaded"
@@ -25,13 +26,6 @@ elif [ "$1" = "t" ]
 then
     MAKESTRING="ghc Viewer.hs"
     eval $MAKESTRING
-    exit
-elif [ "$1" = "h" ]
-then
-    eval "ghc Viewer.hs -O2 -rtsopts -threaded -prof -fprof-auto"
-    cd data
-    eval "../Viewer +RTS -s -K200M -N2 -p -h"$2
-    eval "hp2ps -c Viewer.hp; cd .."
     exit
 else
     echo "ERROR: Argument 1 is wrong (or missing)"
@@ -50,7 +44,7 @@ elif [ "$2" = "h" ]
 then
     MAKESTRING=$MAKESTRING" -prof -fprof-auto"
     cd data
-    eval "../Viewer +RTS -s -K200M -N2 -p -h"$3
+    eval $RUNSTRING" -N2 -p -h"$3
     eval "hp2ps -c Viewer.hp; cd .."
     exit
 elif [ "$2" = "n" ]
@@ -70,10 +64,9 @@ else
     exit
 fi
 
-cd data
-
-RUNSTRING=$RUNSTRING" -RTS"
 eval $MAKESTRING
+cd data
+RUNSTRING=$RUNSTRING" -RTS"
 eval $RUNSTRING
 
 cd ..

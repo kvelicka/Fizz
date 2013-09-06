@@ -6,6 +6,7 @@ import Data.Array.Repa hiding ( (++) )
 import Data.Array.Repa.IO.Binary
 import Data.Array.Repa.Repr.ForeignPtr
 import qualified Graphics.Rendering.OpenGL.GL as GL
+import System.IO (openBinaryFile, IOMode(ReadMode), hFileSize, hClose)
 
 import Maths
 
@@ -56,7 +57,12 @@ data FizzData v = FizzData { origin     :: String
                            --, arr       :: Array F DIM1 v
                            } -- deriving Show
 
-
+fileSize :: FilePath -> IO Int
+fileSize path = do
+  h <- openBinaryFile path ReadMode 
+  sz <- hFileSize h
+  hClose h
+  return $ fromIntegral sz
 
 data Plane = X_equals Int 
            | Y_equals Int 
